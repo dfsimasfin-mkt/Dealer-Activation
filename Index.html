@@ -269,7 +269,9 @@
     display:flex;align-items:center;justify-content:center;
     font-size:40px;
     box-shadow:var(--shadow-sm);
+    overflow:hidden;
   }
+  .reward-icon img{width:100%;height:100%;object-fit:cover;}
   .reward-name{font-size:19px;font-weight:800;color:var(--ink);margin:0 0 2px;}
   .reward-desc{font-size:12.5px;color:var(--ink-soft);margin-bottom:18px;}
   .divider-dash{border-top:1.5px dashed #E7D3B8;margin:16px 0;position:relative;}
@@ -379,7 +381,7 @@
       </div>
       <div class="hero">
         <span class="eyebrow">Program Berhadiah</span>
-        <h1>Pecah <span>Telur</span><br>Menangkan Hadiahnya</h1>
+        <h1 id="landing-title">Pecah <span>Telur</span><br>Menangkan Hadiahnya</h1>
         <p class="sub">Isi datamu, pecahkan satu telur virtual, dan lihat hadiah kejutan yang kamu menangkan hari ini.</p>
         <div class="egg-stage">
           <div class="egg-shadow"></div>
@@ -419,6 +421,7 @@
           <div style="font-size:11px;color:var(--ink-soft);margin-top:4px;font-weight:600;">Menang Hadiah</div>
         </div>
       </div>
+      <p class="game-note" id="landing-disclaimer" style="margin-top:18px;"></p>
     </div>
     <div style="flex:1;"></div>
     <div class="admin-link">Panitia / PIC program? <a id="link-admin">Masuk sebagai Admin</a></div>
@@ -575,19 +578,6 @@
     </div>
   </section>
 
-  <!-- ================= FIREBASE CONFIG GATE ================= -->
-  <section class="screen" id="screen-config-gate">
-    <div class="brandbar" style="padding:16px 22px;">
-      <div class="logo-row"><div class="logo-mark" style="width:26px;height:26px;font-size:13px;">S</div><div class="brandname" style="font-size:11.5px;">Setup Diperlukan</div></div>
-    </div>
-    <div class="body-pad">
-      <h2 class="screen-title">Firebase belum dikonfigurasi</h2>
-      <p class="screen-desc">File ini masih memakai konfigurasi Firebase placeholder. Buka file HTML ini di editor, cari bagian <code>firebaseConfig</code> di dalam tag <code>&lt;script&gt;</code>, dan isi dengan konfigurasi project Firebase kamu sendiri.</p>
-      <div class="alert alert-info">Ikuti langkah-langkah lengkap di file <b>SETUP-FIREBASE.md</b> yang disertakan bersama file ini: buat project Firebase, aktifkan Firestore + Authentication, salin konfigurasi web app, lalu tempel di sini.</div>
-      <p class="screen-desc">Setelah <code>firebaseConfig</code> diisi dan file disimpan ulang, muat ulang halaman ini.</p>
-    </div>
-  </section>
-
   <!-- ================= ADMIN DASHBOARD ================= -->
   <section class="screen" id="screen-admin">
     <div class="admin-header">
@@ -686,6 +676,18 @@
     <div class="footer-note">Pecah Telur · Sinarmas Multifinance · MVP Demo</div>
   </section>
 
+  <!-- ================= FIREBASE CONFIG GATE (fallback, biasanya tidak tampil) ================= -->
+  <section class="screen" id="screen-config-gate">
+    <div class="brandbar" style="padding:16px 22px;">
+      <div class="logo-row"><div class="logo-mark" style="width:26px;height:26px;font-size:13px;">S</div><div class="brandname" style="font-size:11.5px;">Setup Diperlukan</div></div>
+    </div>
+    <div class="body-pad">
+      <h2 class="screen-title">Firebase belum terhubung</h2>
+      <p class="screen-desc">Terjadi kegagalan koneksi ke Firebase. Cek console browser (F12) untuk detail error, dan pastikan domain ini sudah ditambahkan ke Authorized Domains di Firebase Console.</p>
+      <div class="alert alert-info">Lihat <b>SETUP-FIREBASE.md</b> untuk langkah lengkap: membuat project, mengaktifkan Firestore + Authentication, deploy Security Rules, dan menambahkan domain GitHub Pages ke Authorized Domains.</div>
+    </div>
+  </section>
+
 </div>
 
 <!-- ===== Modal: Reward Editor ===== -->
@@ -696,7 +698,7 @@
     <input type="hidden" id="rw-id">
     <div class="field"><label>Nama Hadiah</label><input type="text" id="rw-name" placeholder="Contoh: Voucher Rp100.000"></div>
     <div class="field"><label>Emoji / Ikon</label><input type="text" id="rw-icon" placeholder="🎁" maxlength="4"></div>
-    <div class="field"><label>URL Gambar Hadiah <span class="opt">(opsional)</span></label><input type="text" id="rw-image" placeholder="https://..."></div>
+    <div class="field"><label>URL Gambar Hadiah <span class="opt">(opsional, harus diawali https://)</span></label><input type="text" id="rw-image" placeholder="https://..."></div>
     <div class="field"><label>Keterangan</label><input type="text" id="rw-desc" placeholder="Deskripsi singkat hadiah"></div>
     <div style="display:flex;gap:10px;">
       <div class="field" style="flex:1;"><label>Stok</label><input type="number" min="0" id="rw-stock"></div>
@@ -744,24 +746,28 @@ import {
    Ganti seluruh object di bawah ini dengan konfigurasi Firebase
    project kamu sendiri (Firebase Console → Project settings →
    Your apps → SDK setup and configuration). Lihat SETUP-FIREBASE.md.
+
+   PERBAIKAN dari versi sebelumnya:
+   - Dulu ada import initializeApp KEDUA dengan versi SDK berbeda
+     (12.18.0) di tengah blok ini -> SyntaxError "already declared".
+     Sekarang hanya ada SATU import, konsisten pakai versi 10.13.1
+     yang sama dengan modul firestore/auth di atas.
+   - Dulu variabel `db` dan `auth` tidak pernah dibuat, padahal
+     dipakai di banyak fungsi -> ReferenceError. Sekarang dibuat
+     di sini lewat getFirestore(app) dan getAuth(app).
    ========================================================= */
-  // Import the functions you need from the SDKs you need
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
-  // TODO: Add SDKs for Firebase products that you want to use
-  // https://firebase.google.com/docs/web/setup#available-libraries
+const firebaseConfig = {
+  apiKey: "AIzaSyDYA9Cogk05xDbwnkQ8jNVAaIf3h7JcLwc",
+  authDomain: "gamification-simasfin.firebaseapp.com",
+  projectId: "gamification-simasfin",
+  storageBucket: "gamification-simasfin.firebasestorage.app",
+  messagingSenderId: "306609856896",
+  appId: "1:306609856896:web:3324a5b45d4c99b0866165"
+};
 
-  // Your web app's Firebase configuration
-  const firebaseConfig = {
-    apiKey: "AIzaSyDYA9Cogk05xDbwnkQ8jNVAaIf3h7JcLwc",
-    authDomain: "gamification-simasfin.firebaseapp.com",
-    projectId: "gamification-simasfin",
-    storageBucket: "gamification-simasfin.firebasestorage.app",
-    messagingSenderId: "306609856896",
-    appId: "1:306609856896:web:3324a5b45d4c99b0866165"
-  };
-
-  // Initialize Firebase
-  const app = initializeApp(firebaseConfig);
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
 
 /* =========================================================
    DATA LAYER — Firestore
@@ -773,8 +779,17 @@ import {
                                 Firestore (tidak bisa dua record
                                 pakai ID/kode yang sama).
    - settings/main           : dokumen pengaturan program.
-   Aturan keamanan (Firestore Security Rules) ada di SETUP-FIREBASE.md
-   — itu yang benar-benar mencegah manipulasi stok/hadiah dari
+   - playtracker/{trackerId} : PENAMBAHAN BARU. 1 dokumen per peserta
+                                unik (ID = no. HP dinormalisasi, atau
+                                kombinasi nama+dealer+cabang kalau HP
+                                kosong). Dipakai untuk mengecek "sudah
+                                pernah main belum" TANPA perlu membaca
+                                seluruh koleksi `records` (yang berisi
+                                data pribadi semua peserta lain).
+
+   Aturan keamanan (Firestore Security Rules) ada di file
+   firestore.rules & dijelaskan di SETUP-FIREBASE.md — itu yang
+   benar-benar mencegah manipulasi stok/hadiah/batas main dari
    browser, bukan kode JS di sini.
    ========================================================= */
 const DEFAULT_REWARDS = [
@@ -792,7 +807,6 @@ const DEFAULT_SETTINGS = {
 let rewards = [];
 let records = [];
 let settings = {...DEFAULT_SETTINGS};
-let isAdmin = false;
 
 async function fetchRewards(){
   const snap = await getDocs(collection(db,'rewards'));
@@ -802,6 +816,9 @@ async function fetchRewards(){
   }
   return snap.docs.map(d=>({id:d.id, ...d.data()}));
 }
+/* Hanya dipanggil dari sisi ADMIN (Overview, Records tab, Export CSV).
+   Peserta biasa TIDAK PERNAH memanggil fungsi ini — lihat playtracker
+   di bawah untuk cek eligibility peserta. */
 async function fetchRecords(){
   const snap = await getDocs(collection(db,'records'));
   return snap.docs.map(d=>({id:d.id, code:d.id, ...d.data()}));
@@ -814,12 +831,6 @@ async function fetchSettings(){
 }
 async function saveSettings(newSettings){
   await setDoc(doc(db,'settings','main'), newSettings, {merge:true});
-}
-
-async function loadAll(){
-  rewards = await fetchRewards();
-  records = await fetchRecords();
-  settings = await fetchSettings();
 }
 
 /* =========================================================
@@ -860,45 +871,70 @@ function weightedPick(activeRewards){
   return activeRewards[activeRewards.length-1];
 }
 
-function genWinnerCode(existingCodes){
+/* PERBAIKAN: dulu fungsi ini menerima parameter `existingCodes` yang
+   selalu Set kosong dari pemanggilnya (tidak pernah efektif). Keunikan
+   kode tetap dijamin oleh transaction (lihat playEgg), jadi parameter
+   yang tidak berguna itu dihapus. */
+function genWinnerCode(){
   const now = new Date();
   const ymd = pad(now.getFullYear()%100,2)+pad(now.getMonth()+1,2)+pad(now.getDate(),2);
-  let code, tries=0;
-  do{
-    const num = secureRandomInt(100000);
-    code = 'PET-'+ymd+'-'+pad(num,5);
-    tries++;
-  }while(existingCodes.has(code) && tries<50);
-  return code;
+  const num = secureRandomInt(100000);
+  return 'PET-'+ymd+'-'+pad(num,5);
+}
+
+function escapeHtml(str){
+  return String(str).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+/* PERBAIKAN: dulu URL gambar hadiah dimasukkan ke innerHTML tanpa
+   escaping sama sekali -> celah stored-XSS kalau field image berisi
+   karakter aneh. Sekarang selalu melewati escapeHtml, dan hanya
+   dirender kalau memang diawali http(s):// */
+function safeImageTag(url){
+  const trimmed = String(url||'').trim();
+  if(!/^https?:\/\//i.test(trimmed)) return '';
+  return '<img src="'+escapeHtml(trimmed)+'" alt="">';
 }
 
 /* =========================================================
-   ELIGIBILITY / ANTI-CHEAT (client-side approximation)
+   ANTI-CHEAT — playtracker (PERBAIKAN UTAMA)
+   Dulu: findPriorPlays() mengambil SEMUA dokumen di `records`
+   (nama, no HP, dealer, cabang milik SELURUH peserta) ke browser
+   setiap kali seseorang mengisi form, lalu difilter di client.
+   Itu artinya siapapun bisa buka DevTools dan melihat data semua
+   peserta lain.
+
+   Sekarang: 1 dokumen kecil per peserta di collection `playtracker`,
+   ID dokumennya = kunci unik peserta (hp, atau nama|dealer|cabang).
+   Cek "sudah main belum" jadi 1x `getDoc` by ID (bukan `list` semua
+   data), dan Firestore Rules membatasi counter ini agar hanya naik
+   1-1 dan tidak bisa melebihi batas main (settings.maxPlay) —
+   sehingga tetap aman walau seseorang mencoba panggil Firestore SDK
+   langsung dari console browser tanpa lewat UI.
    ========================================================= */
-function findPriorPlays(nama, dealer, cabang, hp){
+function computeTrackerKey({nama, dealer, cabang, hp}){
   const normHp = (hp||'').replace(/\D/g,'');
-  return records.filter(rec=>{
-    if(normHp && rec.hp && rec.hp.replace(/\D/g,'')===normHp) return true;
-    if(!normHp){
-      return rec.nama.trim().toLowerCase()===nama.trim().toLowerCase() &&
-             rec.dealer.trim().toLowerCase()===dealer.trim().toLowerCase() &&
-             rec.cabang.trim().toLowerCase()===cabang.trim().toLowerCase();
-    }
-    return false;
-  });
+  if(normHp) return 'hp_'+normHp;
+  const raw = [nama,dealer,cabang].map(s=>String(s||'').trim().toLowerCase()).join('|');
+  return 'id_'+raw.replace(/[^a-z0-9|]+/g,'_');
+}
+
+async function getPlayCount(trackerKey){
+  const snap = await getDoc(doc(db,'playtracker',trackerKey));
+  return snap.exists() ? Number(snap.data().count||0) : 0;
 }
 
 /* =========================================================
    STATE (current participant in flow)
    ========================================================= */
 let currentParticipant = null;
-let currentReward = null;
-let currentWinnerCode = null;
 
 /* =========================================================
    LANDING
    ========================================================= */
 function renderLandingInfo(){
+  $('#landing-title').innerHTML = escapeHtml(settings.programName||'Pecah Telur').replace(/^(\S+)/, '$1 <span>Telur</span>');
+  $('#landing-disclaimer').textContent = settings.disclaimer || '';
+
   const note = $('#landing-period-note');
   if(!settings.active){
     note.style.display='block';
@@ -944,8 +980,6 @@ $('#btn-submit-form').addEventListener('click', async ()=>{
   if(!cabang){ $('#f-cabang').classList.add('has-error'); valid=false; }
   if(!valid) return;
 
-  // refresh data terbaru sebelum cek eligibility
-  records = await fetchRecords();
   settings = await fetchSettings();
 
   if(!settings.active){
@@ -954,15 +988,20 @@ $('#btn-submit-form').addEventListener('click', async ()=>{
     return;
   }
 
-  const priorPlays = findPriorPlays(nama, dealer, cabang, hp);
+  // Cek eligibility awal (ramah, cepat). Pengecekan yang SEBENARNYA
+  // mengikat tetap terjadi di dalam transaction saat tombol "Pecahkan
+  // Telur" ditekan + di Firestore Rules — ini hanya agar peserta tidak
+  // perlu sampai ke layar telur dulu baru tahu sudah tidak eligible.
+  const trackerKey = computeTrackerKey({nama, dealer, cabang, hp});
+  const currentCount = await getPlayCount(trackerKey);
   const maxPlay = Number(settings.maxPlay||1);
-  if(priorPlays.length >= maxPlay){
+  if(currentCount >= maxPlay){
     $('#form-alert').style.display='block';
     $('#form-alert').textContent = 'Kamu sudah mencapai batas maksimal bermain ('+maxPlay+'x) pada program ini.';
     return;
   }
 
-  currentParticipant = {nama, dealer, cabang, hp, promo};
+  currentParticipant = {nama, dealer, cabang, hp, promo, trackerKey};
   $('#game-nama-peserta').textContent = nama;
   resetEggVisual();
   showScreen('screen-game');
@@ -978,39 +1017,58 @@ function resetEggVisual(){
   $('#btn-break').textContent = 'Pecahkan Telur!';
 }
 
-/* Decrement stok secara atomik lewat Firestore transaction — kalau dua
-   orang menekan tombol bersamaan untuk stok hadiah terakhir, hanya satu
-   yang berhasil; yang kalah otomatis di-reroll ke hadiah lain. */
-async function decrementRewardStock(rewardId){
-  const ref = doc(db,'rewards',rewardId);
-  return await runTransaction(db, async (tx)=>{
-    const snap = await tx.get(ref);
-    if(!snap.exists()) throw new Error('reward-missing');
-    const data = snap.data();
-    if(!data.active || Number(data.stock)<=0) throw new Error('reward-out-of-stock');
-    tx.update(ref, {stock: Number(data.stock) - 1});
-    return {id: ref.id, ...data, stock: Number(data.stock)-1};
-  });
-}
+/* PERBAIKAN UTAMA: dulu ada 2 fungsi terpisah (decrementRewardStock
+   dan createUniqueRecordDoc) yang dipanggil berurutan (tidak atomik
+   satu sama lain, dan tidak pernah mengecek/menaikkan batas main).
+   Sekarang SATU transaction yang membaca+menulis playtracker, rewards,
+   dan records sekaligus — kalau salah satu gagal (stok habis, kode
+   bentrok, atau batas main sudah tercapai), semuanya dibatalkan
+   bersama dan dicoba ulang dengan hadiah/kode berbeda. */
+async function attemptPlay(participant, rewardCandidate, maxPlay){
+  const trackerRef = doc(db,'playtracker',participant.trackerKey);
+  const rewardRef = doc(db,'rewards',rewardCandidate.id);
+  const code = genWinnerCode();
+  const recordRef = doc(db,'records',code);
 
-/* Winner code = ID dokumen di koleksi records, jadi Firestore sendiri
-   yang menjamin tidak ada dua kode yang sama (create gagal kalau ID
-   sudah dipakai). */
-async function createUniqueRecordDoc(recordData){
-  let tries = 0;
-  while(tries < 8){
-    const code = genWinnerCode(new Set());
-    const ref = doc(db,'records',code);
-    try{
-      await runTransaction(db, async (tx)=>{
-        const snap = await tx.get(ref);
-        if(snap.exists()) throw new Error('code-exists');
-        tx.set(ref, {...recordData, code});
-      });
-      return code;
-    }catch(e){ tries++; }
-  }
-  throw new Error('failed-to-generate-unique-code');
+  const result = await runTransaction(db, async (tx)=>{
+    const trackerSnap = await tx.get(trackerRef);
+    const currentCount = trackerSnap.exists() ? Number(trackerSnap.data().count||0) : 0;
+    if(currentCount >= maxPlay) throw new Error('max-play-reached');
+
+    const rewardSnap = await tx.get(rewardRef);
+    if(!rewardSnap.exists()) throw new Error('reward-missing');
+    const rewardData = rewardSnap.data();
+    if(!rewardData.active || Number(rewardData.stock) <= 0) throw new Error('reward-out-of-stock');
+
+    const recordSnap = await tx.get(recordRef);
+    if(recordSnap.exists()) throw new Error('code-collision');
+
+    const recordData = {
+      timestamp: new Date().toISOString(),
+      nama: participant.nama,
+      dealer: participant.dealer,
+      cabang: participant.cabang,
+      hp: participant.hp || '',
+      promo: participant.promo || '',
+      rewardId: rewardRef.id,
+      rewardName: rewardData.name,
+      status: 'UNCLAIMED',
+      claimTime: '',
+      claimPic: ''
+    };
+
+    tx.update(rewardRef, { stock: Number(rewardData.stock) - 1 });
+    tx.set(trackerRef, {
+      count: currentCount + 1,
+      nama: participant.nama, dealer: participant.dealer, cabang: participant.cabang,
+      lastPlayedAt: new Date().toISOString()
+    }, { merge:true });
+    tx.set(recordRef, recordData);
+
+    return { code, record: {...recordData, id:code, code}, reward: {...rewardData, id:rewardRef.id, stock:Number(rewardData.stock)-1} };
+  });
+
+  return result;
 }
 
 $('#btn-break').addEventListener('click', async ()=>{
@@ -1019,68 +1077,52 @@ $('#btn-break').addEventListener('click', async ()=>{
   btn.disabled = true;
   btn.textContent = 'Memproses...';
 
-  // refresh rewards terbaru & tentukan hadiah SEBELUM animasi selesai
+  settings = await fetchSettings();
+  const maxPlay = Number(settings.maxPlay||1);
+
   rewards = await fetchRewards();
   let candidatePool = rewards.filter(r=> r.active && Number(r.stock)>0);
   if(candidatePool.length===0){
     toast('Maaf, stok hadiah sedang habis. Hubungi panitia.');
-    btn.disabled = false;
-    btn.textContent = 'Pecahkan Telur!';
+    btn.disabled = false; btn.textContent = 'Pecahkan Telur!';
     return;
   }
 
-  let confirmedReward = null;
+  let finalResult = null;
   let attempts = 0;
-  while(!confirmedReward && candidatePool.length>0 && attempts<6){
+  let blockedByMaxPlay = false;
+
+  while(!finalResult && candidatePool.length>0 && attempts<8){
     const picked = weightedPick(candidatePool);
     try{
-      confirmedReward = await decrementRewardStock(picked.id);
+      finalResult = await attemptPlay(currentParticipant, picked, maxPlay);
     }catch(e){
-      // stok keburu diambil orang lain di saat bersamaan — coba hadiah lain
-      candidatePool = candidatePool.filter(r=>r.id!==picked.id);
+      if(e.message === 'max-play-reached'){ blockedByMaxPlay = true; break; }
+      if(e.message === 'reward-out-of-stock' || e.message === 'reward-missing'){
+        candidatePool = candidatePool.filter(r=>r.id!==picked.id);
+      }
+      // 'code-collision' -> coba lagi dengan hadiah yang sama, kode baru otomatis di iterasi berikut
     }
     attempts++;
   }
-  if(!confirmedReward){
-    toast('Maaf, stok hadiah baru saja habis. Coba lagi ya.');
-    btn.disabled = false;
-    btn.textContent = 'Pecahkan Telur!';
+
+  if(blockedByMaxPlay){
+    toast('Kamu sudah mencapai batas maksimal bermain.');
+    btn.disabled = false; btn.textContent = 'Pecahkan Telur!';
     return;
   }
-  currentReward = confirmedReward;
+  if(!finalResult){
+    toast('Maaf, stok hadiah baru saja habis. Coba lagi ya.');
+    btn.disabled = false; btn.textContent = 'Pecahkan Telur!';
+    return;
+  }
 
   wrap.classList.add('shaking');
-  setTimeout(async ()=>{
+  setTimeout(()=>{
     wrap.classList.remove('shaking');
     wrap.classList.add('cracking');
     fireConfetti();
-
-    const recData = {
-      timestamp: new Date().toISOString(),
-      nama: currentParticipant.nama,
-      dealer: currentParticipant.dealer,
-      cabang: currentParticipant.cabang,
-      hp: currentParticipant.hp || '',
-      promo: currentParticipant.promo || '',
-      rewardId: confirmedReward.id,
-      rewardName: confirmedReward.name,
-      status: 'UNCLAIMED',
-      claimTime: '',
-      claimPic: ''
-    };
-
-    let code;
-    try{
-      code = await createUniqueRecordDoc(recData);
-    }catch(e){
-      toast('Terjadi kendala menyimpan hasil. Hubungi panitia.');
-      return;
-    }
-    currentWinnerCode = code;
-    const rec = {...recData, id:code, code};
-    records.push(rec);
-
-    setTimeout(()=>{ renderResult(rec, confirmedReward); showScreen('screen-result'); }, 700);
+    setTimeout(()=>{ renderResult(finalResult.record, finalResult.reward); showScreen('screen-result'); }, 700);
   }, 1250);
 });
 
@@ -1109,10 +1151,9 @@ function fireConfetti(){
    RESULT SCREEN
    ========================================================= */
 function renderResult(rec, reward){
-  $('#result-reward-icon').textContent = reward.icon || '🎁';
-  if(reward.image){
-    $('#result-reward-icon').innerHTML = '<img src="'+reward.image+'" style="width:100%;height:100%;object-fit:cover;border-radius:22px;" alt="">';
-  }
+  const iconEl = $('#result-reward-icon');
+  const imgTag = safeImageTag(reward.image);
+  iconEl.innerHTML = imgTag || escapeHtml(reward.icon || '🎁');
   $('#result-reward-name').textContent = reward.name;
   $('#result-reward-desc').textContent = reward.desc || '';
   $('#result-nama').textContent = rec.nama;
@@ -1192,10 +1233,10 @@ function renderOverview(){
   const stockWrap = $('#overview-stock-list');
   stockWrap.innerHTML = rewards.map(r=>`
     <div class="card" style="display:flex;align-items:center;justify-content:space-between;">
-      <div class="reward-row"><div class="thumb">${r.image?('<img src="'+r.image+'">'):(r.icon||'🎁')}</div>
-        <div class="meta"><div class="nm">${escapeHtml(r.name)}</div><div class="sub">Weight ${r.weight} · ${r.active?'Aktif':'Nonaktif'}</div></div>
+      <div class="reward-row"><div class="thumb">${safeImageTag(r.image) || escapeHtml(r.icon||'🎁')}</div>
+        <div class="meta"><div class="nm">${escapeHtml(r.name)}</div><div class="sub">Weight ${Number(r.weight)} · ${r.active?'Aktif':'Nonaktif'}</div></div>
       </div>
-      <div style="text-align:right;"><div style="font-weight:800;font-size:16px;color:var(--red);">${r.stock}</div><div style="font-size:10px;color:var(--ink-soft);">sisa stok</div></div>
+      <div style="text-align:right;"><div style="font-weight:800;font-size:16px;color:var(--red);">${Number(r.stock)}</div><div style="font-size:10px;color:var(--ink-soft);">sisa stok</div></div>
     </div>`).join('') || '<p style="font-size:12.5px;color:var(--ink-soft);">Belum ada hadiah.</p>';
 
   const byDealer = groupCount(records, 'dealer');
@@ -1211,9 +1252,6 @@ function groupCount(list, field){
   list.forEach(r=>{ const k=r[field]||'-'; out[k]=(out[k]||0)+1; });
   return out;
 }
-function escapeHtml(str){
-  return String(str).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-}
 
 /* =========================================================
    ADMIN — REWARDS CRUD
@@ -1223,16 +1261,16 @@ function renderRewardsList(){
   wrap.innerHTML = rewards.map(r=>`
     <div class="card">
       <div class="reward-row">
-        <div class="thumb">${r.image?('<img src="'+r.image+'">'):(r.icon||'🎁')}</div>
+        <div class="thumb">${safeImageTag(r.image) || escapeHtml(r.icon||'🎁')}</div>
         <div class="meta">
           <div class="nm">${escapeHtml(r.name)} <span class="pill ${r.active?'pill-active':'pill-inactive'}">${r.active?'Aktif':'Nonaktif'}</span></div>
-          <div class="sub">Stok: ${r.stock} · Weight: ${r.weight}</div>
+          <div class="sub">Stok: ${Number(r.stock)} · Weight: ${Number(r.weight)}</div>
         </div>
       </div>
       <div class="row-actions">
-        <button class="btn btn-secondary btn-sm" data-edit="${r.id}">Edit</button>
-        <button class="btn btn-outline-red btn-sm" data-toggle="${r.id}">${r.active?'Nonaktifkan':'Aktifkan'}</button>
-        <button class="btn btn-outline-red btn-sm" data-del="${r.id}">Hapus</button>
+        <button class="btn btn-secondary btn-sm" data-edit="${escapeHtml(r.id)}">Edit</button>
+        <button class="btn btn-outline-red btn-sm" data-toggle="${escapeHtml(r.id)}">${r.active?'Nonaktifkan':'Aktifkan'}</button>
+        <button class="btn btn-outline-red btn-sm" data-del="${escapeHtml(r.id)}">Hapus</button>
       </div>
     </div>`).join('') || '<p style="font-size:12.5px;color:var(--ink-soft);">Belum ada hadiah. Tambahkan hadiah baru.</p>';
 
@@ -1262,10 +1300,15 @@ $('#btn-save-reward').addEventListener('click', async ()=>{
   const id = $('#rw-id').value;
   const name = $('#rw-name').value.trim();
   if(!name){ toast('Nama hadiah wajib diisi'); return; }
+  const imageVal = $('#rw-image').value.trim();
+  if(imageVal && !/^https?:\/\//i.test(imageVal)){
+    toast('URL gambar harus diawali http:// atau https://');
+    return;
+  }
   const data = {
     name,
     icon: $('#rw-icon').value.trim() || '🎁',
-    image: $('#rw-image').value.trim(),
+    image: imageVal,
     desc: $('#rw-desc').value.trim(),
     stock: Math.max(0, parseInt($('#rw-stock').value)||0),
     weight: Math.max(1, parseInt($('#rw-weight').value)||1),
@@ -1320,9 +1363,9 @@ function renderRecordsTable(){
       <td>${escapeHtml(r.dealer)}</td>
       <td>${escapeHtml(r.cabang)}</td>
       <td>${escapeHtml(r.rewardName)}</td>
-      <td><b>${r.code}</b></td>
-      <td><span class="pill ${r.status==='CLAIMED'?'pill-claimed':'pill-unclaimed'}">${r.status}</span></td>
-      <td>${r.status==='UNCLAIMED' ? `<button class="btn btn-secondary btn-sm" data-claim="${r.id}">Verifikasi</button>` : (r.claimPic? 'oleh '+escapeHtml(r.claimPic):'-')}</td>
+      <td><b>${escapeHtml(r.code)}</b></td>
+      <td><span class="pill ${r.status==='CLAIMED'?'pill-claimed':'pill-unclaimed'}">${escapeHtml(r.status)}</span></td>
+      <td>${r.status==='UNCLAIMED' ? `<button class="btn btn-secondary btn-sm" data-claim="${escapeHtml(r.id)}">Verifikasi</button>` : (r.claimPic? 'oleh '+escapeHtml(r.claimPic):'-')}</td>
     </tr>`).join('') || '<tr><td colspan="8" style="color:var(--ink-soft);">Belum ada data peserta.</td></tr>';
 
   $all('[data-claim]').forEach(b=> b.addEventListener('click', ()=> openClaimModal(b.dataset.claim)));
@@ -1360,7 +1403,7 @@ $('#btn-verify-code').addEventListener('click', async ()=>{
     return;
   }
   const rec = {id:snap.id, code:snap.id, ...snap.data()};
-  out.innerHTML = `<b>${rec.status}</b> — ${escapeHtml(rec.nama)} (${escapeHtml(rec.dealer)}, ${escapeHtml(rec.cabang)}) memenangkan <b>${escapeHtml(rec.rewardName)}</b> pada ${fmtDate(rec.timestamp)}.`
+  out.innerHTML = `<b>${escapeHtml(rec.status)}</b> — ${escapeHtml(rec.nama)} (${escapeHtml(rec.dealer)}, ${escapeHtml(rec.cabang)}) memenangkan <b>${escapeHtml(rec.rewardName)}</b> pada ${fmtDate(rec.timestamp)}.`
     + (rec.status==='UNCLAIMED' ? ` <button class="btn btn-secondary btn-sm" style="margin-top:8px;" id="verify-claim-now">Verifikasi Sekarang</button>` : '');
   const btnNow = document.getElementById('verify-claim-now');
   if(btnNow) btnNow.addEventListener('click', ()=> openClaimModal(rec.id));
@@ -1415,6 +1458,8 @@ $('#btn-reset-data').addEventListener('click', async ()=>{
   for(const d of recSnap.docs){ await deleteDoc(d.ref); }
   const rwSnap = await getDocs(collection(db,'rewards'));
   for(const d of rwSnap.docs){ await deleteDoc(d.ref); }
+  const trackerSnap = await getDocs(collection(db,'playtracker'));
+  for(const d of trackerSnap.docs){ await deleteDoc(d.ref); }
   for(const r of DEFAULT_REWARDS){ await setDoc(doc(db,'rewards',r.id), r); }
   rewards = await fetchRewards();
   records = await fetchRecords();
@@ -1425,21 +1470,13 @@ $('#btn-reset-data').addEventListener('click', async ()=>{
 /* =========================================================
    AUTH STATE & INIT
    Anonymous auth dipakai untuk peserta biasa (dibutuhkan oleh
-   Firestore security rules di SETUP-FIREBASE.md). Login admin
+   Firestore security rules di firestore.rules). Login admin
    pakai email/password menggantikan sesi anonim untuk tab ini.
    ========================================================= */
-(async function init(){
-  if(CONFIG_NOT_SET){
-    showScreen('screen-config-gate');
-    return;
-  }
-
+async function init(){
   onAuthStateChanged(auth, async (user)=>{
     if(user && !user.isAnonymous){
-      isAdmin = true;
       await enterAdmin();
-    }else{
-      isAdmin = false;
     }
   });
 
@@ -1447,11 +1484,20 @@ $('#btn-reset-data').addEventListener('click', async ()=>{
     await signInAnonymously(auth);
   }catch(e){
     console.error('Anonymous sign-in gagal', e);
+    showScreen('screen-config-gate');
+    return;
   }
 
-  await loadAll();
-  renderLandingInfo();
-})();
+  try{
+    settings = await fetchSettings();
+    renderLandingInfo();
+  }catch(e){
+    console.error('Gagal memuat settings', e);
+    showScreen('screen-config-gate');
+  }
+}
+
+init();
 </script>
 </body>
 </html>
