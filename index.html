@@ -808,12 +808,23 @@ let rewards = [];
 let records = [];
 let settings = {...DEFAULT_SETTINGS};
 
+/* PERBAIKAN: dulu fungsi ini mencoba MENULIS dokumen default ke
+   Firestore kalau belum ada ("auto-seed on read"). Itu masalah besar
+   karena fungsi ini juga dipanggil oleh PESERTA ANONIM (di init() dan
+   btn-break) — dan menulis ke `rewards`/`settings` khusus admin
+   menurut Firestore Rules. Hasilnya: peserta yang membuka halaman
+   sebelum ada admin yang pernah login akan mendapat error
+   "Missing or insufficient permissions" karena percobaan menulis itu
+   ditolak rules.
+
+   Sekarang fetchRewards() dan fetchSettings() HANYA membaca. Kalau
+   dokumennya belum ada, dikembalikan nilai default di memori saja
+   (tidak disimpan). Yang berhak menyimpan default ke Firestore hanya
+   ensureSeeded(), dipanggil dari enterAdmin() saat admin login —
+   karena hanya admin yang punya izin menulis. */
 async function fetchRewards(){
   const snap = await getDocs(collection(db,'rewards'));
-  if(snap.empty){
-    for(const r of DEFAULT_REWARDS){ await setDoc(doc(db,'rewards',r.id), r); }
-    return DEFAULT_REWARDS.map(r=>({...r}));
-  }
+  if(snap.empty) return DEFAULT_REWARDS.map(r=>({...r}));
   return snap.docs.map(d=>({id:d.id, ...d.data()}));
 }
 /* Hanya dipanggil dari sisi ADMIN (Overview, Records tab, Export CSV).
@@ -826,11 +837,25 @@ async function fetchRecords(){
 async function fetchSettings(){
   const ref = doc(db,'settings','main');
   const snap = await getDoc(ref);
-  if(!snap.exists()){ await setDoc(ref, DEFAULT_SETTINGS); return {...DEFAULT_SETTINGS}; }
+  if(!snap.exists()) return {...DEFAULT_SETTINGS};
   return snap.data();
 }
 async function saveSettings(newSettings){
   await setDoc(doc(db,'settings','main'), newSettings, {merge:true});
+}
+
+/* Menabur data default ke Firestore. HANYA dipanggil saat admin login
+   (enterAdmin), karena hanya admin yang punya izin menulis ke
+   `rewards`/`settings` menurut Firestore Rules. Aman dipanggil
+   berkali-kali (tidak menimpa data yang sudah ada). */
+async function ensureSeeded(){
+  const rwSnap = await getDocs(collection(db,'rewards'));
+  if(rwSnap.empty){
+    for(const r of DEFAULT_REWARDS){ await setDoc(doc(db,'rewards',r.id), r); }
+  }
+  const setRef = doc(db,'settings','main');
+  const setSnap = await getDoc(setRef);
+  if(!setSnap.exists()){ await setDoc(setRef, DEFAULT_SETTINGS); }
 }
 
 /* =========================================================
@@ -1191,6 +1216,7 @@ $('#btn-admin-logout').addEventListener('click', async ()=>{
 });
 
 async function enterAdmin(){
+  await ensureSeeded();
   rewards = await fetchRewards();
   records = await fetchRecords();
   settings = await fetchSettings();
