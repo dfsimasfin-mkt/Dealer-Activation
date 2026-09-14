@@ -102,6 +102,9 @@
     margin-bottom:14px;
     border:1px solid rgba(243,215,124,0.4);
   }
+  .landing-dealer-badge{
+    font-size:12.5px;color:var(--gold-light);font-weight:700;margin:0 0 8px;opacity:.92;
+  }
   .hero h1{
     font-size:clamp(30px,8vw,40px);
     font-weight:900;
@@ -296,7 +299,14 @@
   .admin-body{padding:30px 26px;flex:1;}
   .admin-header{padding:20px 24px;background:var(--ink);color:var(--white);display:flex;align-items:center;justify-content:space-between;}
   .admin-header .t{font-weight:800;font-size:15px;}
-  .admin-tabs{display:flex;gap:6px;padding:12px 16px 0;overflow-x:auto;background:var(--white);border-bottom:1px solid #F0E2CC;position:sticky;top:0;z-index:5;}
+  .dealer-switch-bar{
+    padding:12px 20px;background:var(--white);border-bottom:1px solid #F0E2CC;
+    display:flex;gap:8px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:6;
+  }
+  .dealer-switch-bar select{
+    flex:1;min-width:160px;padding:10px 12px;border-radius:10px;border:1.5px solid #EBD9C8;font-size:12.5px;background:var(--white);
+  }
+  .admin-tabs{display:flex;gap:6px;padding:12px 16px 0;overflow-x:auto;background:var(--white);border-bottom:1px solid #F0E2CC;position:sticky;top:53px;z-index:5;}
   .admin-tab{
     padding:10px 14px;font-size:12.5px;font-weight:700;color:var(--ink-soft);
     border-bottom:2.5px solid transparent;white-space:nowrap;cursor:pointer;
@@ -381,6 +391,7 @@
       </div>
       <div class="hero">
         <span class="eyebrow">Program Berhadiah</span>
+        <div class="landing-dealer-badge" id="landing-dealer-name"></div>
         <h1 id="landing-title">Pecah <span>Telur</span><br>Menangkan Hadiahnya</h1>
         <p class="sub">Isi datamu, pecahkan satu telur virtual, dan lihat hadiah kejutan yang kamu menangkan hari ini.</p>
         <div class="egg-stage">
@@ -441,6 +452,7 @@
       <h2 class="screen-title">Data Peserta</h2>
       <p class="screen-desc">Lengkapi data berikut sebelum memecahkan telur. Pastikan data sesuai identitas kamu untuk keperluan verifikasi hadiah.</p>
 
+      <div class="alert alert-info" id="form-dealer-info" style="display:none;"></div>
       <div class="alert alert-danger" id="form-alert" style="display:none;"></div>
 
       <div class="field" id="f-nama">
@@ -448,20 +460,11 @@
         <input type="text" id="input-nama" placeholder="Contoh: Budi Santoso" autocomplete="name">
         <div class="err">Nama wajib diisi.</div>
       </div>
-      <div class="field" id="f-dealer">
-        <label>Nama Dealer <span class="req">*</span></label>
-        <input type="text" id="input-dealer" placeholder="Contoh: Dealer Mobil Jaya">
-        <div class="err">Nama dealer wajib diisi.</div>
-      </div>
-      <div class="field" id="f-cabang">
-        <label>Cabang <span class="req">*</span></label>
-        <input type="text" id="input-cabang" placeholder="Contoh: Cabang Makassar">
-        <div class="err">Cabang wajib diisi.</div>
-      </div>
       <div class="field" id="f-hp">
-        <label>No. HP <span class="opt">(disarankan — WhatsApp aktif)</span></label>
+        <label>No. HP (WhatsApp aktif) <span class="req">*</span></label>
         <input type="tel" id="input-hp" placeholder="08xxxxxxxxxx" autocomplete="tel">
-        <div class="hint">Digunakan untuk mencegah main berulang kali dan verifikasi hadiah.</div>
+        <div class="hint">Wajib diisi — dipakai untuk verifikasi hadiah &amp; memastikan satu nomor hanya main satu kali di dealer ini.</div>
+        <div class="err">No. HP wajib diisi dengan benar.</div>
       </div>
       <div class="field" id="f-promo">
         <label>Kode Peserta / Promo <span class="opt">(opsional)</span></label>
@@ -563,7 +566,7 @@
     </div>
     <div class="body-pad">
       <h2 class="screen-title">Masuk Admin</h2>
-      <p class="screen-desc">Login memakai akun Firebase Authentication yang sudah dibuat di Firebase Console (lihat SETUP-FIREBASE.md).</p>
+      <p class="screen-desc">Login memakai akun Firebase Authentication yang sudah dibuat di Firebase Console (lihat SETUP-FIREBASE.md). Satu akun admin bisa mengelola semua dealer.</p>
       <div class="alert alert-danger" id="admin-login-alert" style="display:none;">Email atau password salah.</div>
       <div class="field">
         <label>Email Admin</label>
@@ -584,6 +587,11 @@
       <div class="t">🥚 Pecah Telur — Admin</div>
       <button class="btn-sm btn" style="background:rgba(255,255,255,.12);color:#fff;border-radius:100px;" id="btn-admin-logout">Keluar</button>
     </div>
+    <div class="dealer-switch-bar">
+      <select id="admin-dealer-select"></select>
+      <button class="btn btn-secondary btn-sm" id="btn-copy-dealer-link">🔗 Salin Link</button>
+      <button class="btn btn-primary btn-sm" id="btn-add-dealer">+ Dealer</button>
+    </div>
     <div class="admin-tabs">
       <div class="admin-tab active" data-tab="overview">Overview</div>
       <div class="admin-tab" data-tab="rewards">Hadiah</div>
@@ -601,16 +609,13 @@
         <div class="stat-card"><div class="n" id="st-claimed">0</div><div class="l">Hadiah Claimed</div></div>
         <div class="stat-card"><div class="n" id="st-unclaimed">0</div><div class="l">Hadiah Unclaimed</div></div>
       </div>
-      <div class="section-title">Sisa Stok Hadiah</div>
+      <div class="section-title">Sisa Stok Hadiah — Dealer Ini</div>
       <div id="overview-stock-list"></div>
-      <div class="section-title">Ringkasan per Dealer</div>
-      <div class="table-scroll"><table class="records" id="tbl-by-dealer"><thead><tr><th>Dealer</th><th>Play</th><th>Menang</th></tr></thead><tbody></tbody></table></div>
-      <div class="section-title">Ringkasan per Cabang</div>
-      <div class="table-scroll"><table class="records" id="tbl-by-cabang"><thead><tr><th>Cabang</th><th>Play</th><th>Menang</th></tr></thead><tbody></tbody></table></div>
     </div>
 
     <!-- REWARDS -->
     <div class="admin-panel" id="panel-rewards">
+      <p class="game-note" style="max-width:none;text-align:left;margin:0 0 14px;">Hadiah di bawah ini khusus untuk dealer yang sedang dipilih di atas.</p>
       <button class="btn btn-primary btn-sm" id="btn-add-reward" style="margin-bottom:14px;">+ Tambah Hadiah</button>
       <div id="rewards-list"></div>
     </div>
@@ -618,7 +623,7 @@
     <!-- RECORDS -->
     <div class="admin-panel" id="panel-records">
       <div class="toolbar">
-        <input type="text" id="rec-search" placeholder="Cari nama / dealer / cabang / kode / hadiah...">
+        <input type="text" id="rec-search" placeholder="Cari nama / kode / hadiah...">
       </div>
       <div class="toolbar" style="margin-top:8px;">
         <select id="rec-filter-status">
@@ -632,13 +637,14 @@
       <div class="table-scroll">
         <table class="records" id="tbl-records">
           <thead><tr>
-            <th>Waktu</th><th>Nama</th><th>Dealer</th><th>Cabang</th><th>Hadiah</th><th>Kode</th><th>Status</th><th>Aksi</th>
+            <th>Waktu</th><th>Nama</th><th>No. HP</th><th>Hadiah</th><th>Kode</th><th>Status</th><th>Aksi</th>
           </tr></thead>
           <tbody></tbody>
         </table>
       </div>
       <div class="section-title">Verifikasi Kode Manual</div>
       <div class="card">
+        <p style="font-size:11.5px;color:var(--ink-soft);margin:0 0 10px;">Pencarian kode hanya di dalam dealer yang sedang dipilih di atas.</p>
         <div class="toolbar">
           <input type="text" id="verify-code-input" placeholder="Masukkan Winner Code (PET-...)">
           <button class="btn btn-secondary btn-sm" id="btn-verify-code">Cek</button>
@@ -650,15 +656,20 @@
     <!-- SETTINGS -->
     <div class="admin-panel" id="panel-settings">
       <div class="card">
+        <div class="section-title" style="margin-top:0;">Identitas Dealer</div>
+        <div class="field"><label>Nama Dealer</label><input type="text" id="set-dealer-name"></div>
+        <div class="field"><label>Cabang</label><input type="text" id="set-dealer-cabang"></div>
+      </div>
+      <div class="card">
         <div class="section-title" style="margin-top:0;">Program</div>
         <div class="field"><label>Nama Program</label><input type="text" id="set-program-name"></div>
         <div class="field"><label>Periode Mulai</label><input type="date" id="set-period-start"></div>
         <div class="field"><label>Periode Selesai</label><input type="date" id="set-period-end"></div>
         <div class="field" style="display:flex;align-items:center;justify-content:space-between;">
-          <label style="margin:0;">Program Aktif</label>
+          <label style="margin:0;">Program Aktif (dealer ini)</label>
           <label class="switch"><input type="checkbox" id="set-active"><span class="slider-tog"></span></label>
         </div>
-        <div class="field"><label>Maksimal Main per Peserta</label><input type="number" min="1" id="set-maxplay"></div>
+        <div class="field"><label>Maksimal Main per No. HP</label><input type="number" min="1" id="set-maxplay"></div>
         <div class="field"><label>Disclaimer</label><textarea id="set-disclaimer" rows="3"></textarea></div>
       </div>
       <div class="card">
@@ -669,11 +680,25 @@
 
       <div class="section-title">Data &amp; Reset</div>
       <div class="card">
-        <p style="font-size:12px;color:var(--ink-soft);margin:0 0 10px;">Reset seluruh data peserta, pemenang, dan stok hadiah ke kondisi awal. Tindakan ini tidak dapat dibatalkan.</p>
-        <button class="btn btn-outline-red btn-sm" id="btn-reset-data">Reset Semua Data</button>
+        <p style="font-size:12px;color:var(--ink-soft);margin:0 0 10px;">Reset data peserta, pemenang, dan stok hadiah <b>khusus dealer yang sedang dipilih di atas</b>. Dealer lain tidak terpengaruh. Tindakan ini tidak dapat dibatalkan.</p>
+        <button class="btn btn-outline-red btn-sm" id="btn-reset-data">Reset Data Dealer Ini</button>
       </div>
     </div>
     <div class="footer-note">Pecah Telur · Sinarmas Multifinance · MVP Demo</div>
+  </section>
+
+  <!-- ================= DEALER TIDAK VALID ================= -->
+  <section class="screen" id="screen-dealer-invalid">
+    <div class="brandbar" style="padding:16px 22px;">
+      <div class="logo-row"><div class="logo-mark" style="width:26px;height:26px;font-size:13px;">S</div><div class="brandname" style="font-size:11.5px;">Sinarmas Multifinance</div></div>
+    </div>
+    <div class="body-pad">
+      <h2 class="screen-title">Link belum sesuai</h2>
+      <p class="screen-desc" id="dealer-invalid-msg">Link tidak lengkap. Silakan gunakan link atau scan QR resmi dari dealer Anda.</p>
+      <div class="alert alert-info">Setiap dealer punya link khusus. Kalau Anda panitia/PIC, masuk sebagai Admin untuk mengambil link tiap dealer.</div>
+    </div>
+    <div style="flex:1;"></div>
+    <div class="admin-link">Panitia / PIC program? <a id="link-admin-2">Masuk sebagai Admin</a></div>
   </section>
 
   <!-- ================= FIREBASE CONFIG GATE (fallback, biasanya tidak tampil) ================= -->
@@ -688,6 +713,20 @@
     </div>
   </section>
 
+</div>
+
+<!-- ===== Modal: Dealer Editor ===== -->
+<div class="modal-backdrop" id="modal-dealer">
+  <div class="modal">
+    <h3>Tambah Dealer</h3>
+    <p>Setiap dealer punya hadiah, stok, peserta, dan link main sendiri-sendiri.</p>
+    <div class="field"><label>Nama Dealer</label><input type="text" id="dl-name" placeholder="Contoh: DVR Auto"></div>
+    <div class="field"><label>Cabang</label><input type="text" id="dl-cabang" placeholder="Contoh: Balikpapan"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary btn-block" id="btn-cancel-dealer">Batal</button>
+      <button class="btn btn-primary btn-block" id="btn-save-dealer">Simpan</button>
+    </div>
+  </div>
 </div>
 
 <!-- ===== Modal: Reward Editor ===== -->
@@ -734,7 +773,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
 import {
   getFirestore, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc,
-  collection, query, where, runTransaction
+  collection, runTransaction
 } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 import {
   getAuth, signInWithEmailAndPassword, signInAnonymously,
@@ -746,15 +785,6 @@ import {
    Ganti seluruh object di bawah ini dengan konfigurasi Firebase
    project kamu sendiri (Firebase Console → Project settings →
    Your apps → SDK setup and configuration). Lihat SETUP-FIREBASE.md.
-
-   PERBAIKAN dari versi sebelumnya:
-   - Dulu ada import initializeApp KEDUA dengan versi SDK berbeda
-     (12.18.0) di tengah blok ini -> SyntaxError "already declared".
-     Sekarang hanya ada SATU import, konsisten pakai versi 10.13.1
-     yang sama dengan modul firestore/auth di atas.
-   - Dulu variabel `db` dan `auth` tidak pernah dibuat, padahal
-     dipakai di banyak fungsi -> ReferenceError. Sekarang dibuat
-     di sini lewat getFirestore(app) dan getAuth(app).
    ========================================================= */
 const firebaseConfig = {
   apiKey: "AIzaSyDYA9Cogk05xDbwnkQ8jNVAaIf3h7JcLwc",
@@ -770,27 +800,26 @@ const db = getFirestore(app);
 const auth = getAuth(app);
 
 /* =========================================================
-   DATA LAYER — Firestore
+   DATA LAYER — Firestore (struktur multi-dealer)
    Koleksi:
-   - rewards/{rewardId}      : dokumen hadiah (stok, weight, dst)
-   - records/{winnerCode}    : dokumen transaksi permainan.
-                                Doc ID = winner code itu sendiri,
-                                sehingga keunikan kode dijamin oleh
-                                Firestore (tidak bisa dua record
-                                pakai ID/kode yang sama).
-   - settings/main           : dokumen pengaturan program.
-   - playtracker/{trackerId} : PENAMBAHAN BARU. 1 dokumen per peserta
-                                unik (ID = no. HP dinormalisasi, atau
-                                kombinasi nama+dealer+cabang kalau HP
-                                kosong). Dipakai untuk mengecek "sudah
-                                pernah main belum" TANPA perlu membaca
-                                seluruh koleksi `records` (yang berisi
-                                data pribadi semua peserta lain).
+   - dealers/{dealerId}                       : identitas + pengaturan 1 dealer
+                                                 (nama, cabang, aktif, maxPlay, disclaimer, periode).
+   - dealers/{dealerId}/rewards/{rewardId}     : hadiah milik dealer itu saja.
+   - dealers/{dealerId}/records/{winnerCode}   : transaksi permainan milik dealer itu saja.
+                                                  Doc ID = winner code, jadi keunikan kode
+                                                  dijamin Firestore di dalam scope dealer ini.
+   - dealers/{dealerId}/playtracker/{trackerId}: 1 dokumen per No. HP unik DI DEALER INI
+                                                  (ID = No. HP dinormalisasi). Dipakai untuk
+                                                  mengecek "nomor ini sudah pernah main di
+                                                  dealer ini belum" tanpa membaca seluruh
+                                                  koleksi `records`.
 
-   Aturan keamanan (Firestore Security Rules) ada di file
-   firestore.rules & dijelaskan di SETUP-FIREBASE.md — itu yang
-   benar-benar mencegah manipulasi stok/hadiah/batas main dari
-   browser, bukan kode JS di sini.
+   Setiap dealer terisolasi lewat path-nya sendiri — satu link main
+   (index.html?dealer=<id>) hanya bisa membaca/menulis data dealer itu.
+
+   Aturan keamanan (Firestore Security Rules) ada di SETUP-FIREBASE.md
+   — itu yang benar-benar mencegah manipulasi stok/hadiah/batas main
+   dari browser, bukan kode JS di sini.
    ========================================================= */
 const DEFAULT_REWARDS = [
   {id:'r1', name:'Voucher Rp500.000', icon:'💳', image:'', desc:'Voucher belanja senilai Rp500.000', stock:2, weight:1, active:true},
@@ -799,63 +828,75 @@ const DEFAULT_REWARDS = [
   {id:'r4', name:'Voucher Rp50.000', icon:'🎫', image:'', desc:'Voucher belanja senilai Rp50.000', stock:50, weight:30, active:true},
   {id:'r5', name:'Hadiah Hiburan', icon:'🎉', image:'', desc:'Hadiah hiburan menarik', stock:100, weight:49, active:true},
 ];
-const DEFAULT_SETTINGS = {
+const DEFAULT_DEALER_SETTINGS = {
   programName:'Pecah Telur', periodStart:'', periodEnd:'', active:true,
   maxPlay:1, disclaimer:'Hadiah tidak dapat diuangkan dan tunduk pada syarat & ketentuan program.'
 };
 
 let rewards = [];
 let records = [];
-let settings = {...DEFAULT_SETTINGS};
 
-/* PERBAIKAN: dulu fungsi ini mencoba MENULIS dokumen default ke
-   Firestore kalau belum ada ("auto-seed on read"). Itu masalah besar
-   karena fungsi ini juga dipanggil oleh PESERTA ANONIM (di init() dan
-   btn-break) — dan menulis ke `rewards`/`settings` khusus admin
-   menurut Firestore Rules. Hasilnya: peserta yang membuka halaman
-   sebelum ada admin yang pernah login akan mendapat error
-   "Missing or insufficient permissions" karena percobaan menulis itu
-   ditolak rules.
+/* --- Publik (peserta) --- */
+let currentDealerId = null;
+let currentDealer = null;
 
-   Sekarang fetchRewards() dan fetchSettings() HANYA membaca. Kalau
-   dokumennya belum ada, dikembalikan nilai default di memori saja
-   (tidak disimpan). Yang berhak menyimpan default ke Firestore hanya
-   ensureSeeded(), dipanggil dari enterAdmin() saat admin login —
-   karena hanya admin yang punya izin menulis. */
-async function fetchRewards(){
-  const snap = await getDocs(collection(db,'rewards'));
+/* --- Admin --- */
+let dealersList = [];
+let adminDealerId = null;
+let currentAdminDealer = null;
+
+async function fetchDealer(dealerId){
+  const snap = await getDoc(doc(db,'dealers',dealerId));
+  return snap.exists() ? {id:snap.id, ...snap.data()} : null;
+}
+async function fetchDealers(){
+  const snap = await getDocs(collection(db,'dealers'));
+  return snap.docs.map(d=>({id:d.id, ...d.data()}));
+}
+/* Hanya dibaca — kalau koleksi rewards dealer ini masih kosong (belum
+   pernah di-seed), kembalikan default di memori saja tanpa menulis,
+   supaya peserta anonim tidak pernah mencoba menulis ke Firestore. */
+async function fetchRewards(dealerId){
+  const snap = await getDocs(collection(db,'dealers',dealerId,'rewards'));
   if(snap.empty) return DEFAULT_REWARDS.map(r=>({...r}));
   return snap.docs.map(d=>({id:d.id, ...d.data()}));
 }
-/* Hanya dipanggil dari sisi ADMIN (Overview, Records tab, Export CSV).
-   Peserta biasa TIDAK PERNAH memanggil fungsi ini — lihat playtracker
-   di bawah untuk cek eligibility peserta. */
-async function fetchRecords(){
-  const snap = await getDocs(collection(db,'records'));
+/* Hanya dipanggil dari sisi ADMIN. Peserta biasa tidak pernah membaca
+   koleksi records — hasil main langsung dari return value transaction. */
+async function fetchRecords(dealerId){
+  const snap = await getDocs(collection(db,'dealers',dealerId,'records'));
   return snap.docs.map(d=>({id:d.id, code:d.id, ...d.data()}));
 }
-async function fetchSettings(){
-  const ref = doc(db,'settings','main');
-  const snap = await getDoc(ref);
-  if(!snap.exists()) return {...DEFAULT_SETTINGS};
-  return snap.data();
-}
-async function saveSettings(newSettings){
-  await setDoc(doc(db,'settings','main'), newSettings, {merge:true});
+
+/* Dipanggil HANYA saat admin menambah dealer baru — menabur hadiah
+   default ke dealer itu, karena hanya admin yang punya izin menulis. */
+async function seedDealerRewards(dealerId){
+  for(const r of DEFAULT_REWARDS){ await setDoc(doc(db,'dealers',dealerId,'rewards',r.id), r); }
 }
 
-/* Menabur data default ke Firestore. HANYA dipanggil saat admin login
-   (enterAdmin), karena hanya admin yang punya izin menulis ke
-   `rewards`/`settings` menurut Firestore Rules. Aman dipanggil
-   berkali-kali (tidak menimpa data yang sudah ada). */
-async function ensureSeeded(){
-  const rwSnap = await getDocs(collection(db,'rewards'));
-  if(rwSnap.empty){
-    for(const r of DEFAULT_REWARDS){ await setDoc(doc(db,'rewards',r.id), r); }
-  }
-  const setRef = doc(db,'settings','main');
-  const setSnap = await getDoc(setRef);
-  if(!setSnap.exists()){ await setDoc(setRef, DEFAULT_SETTINGS); }
+function slugify(str){
+  const s = String(str||'').trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,40);
+  return s || ('dealer-'+Date.now());
+}
+function uniqueDealerId(name){
+  const base = slugify(name);
+  let id = base, n = 2;
+  while(dealersList.some(d=>d.id===id)){ id = base+'-'+n; n++; }
+  return id;
+}
+async function createDealer(name, cabang){
+  const id = uniqueDealerId(name);
+  const dealerData = {
+    name, cabang,
+    ...DEFAULT_DEALER_SETTINGS,
+    createdAt: new Date().toISOString()
+  };
+  await setDoc(doc(db,'dealers',id), dealerData);
+  await seedDealerRewards(id);
+  return id;
+}
+function dealerPublicLink(dealerId){
+  return location.origin + location.pathname + '?dealer=' + encodeURIComponent(dealerId);
 }
 
 /* =========================================================
@@ -896,24 +937,22 @@ function weightedPick(activeRewards){
   return activeRewards[activeRewards.length-1];
 }
 
-/* PERBAIKAN: dulu fungsi ini menerima parameter `existingCodes` yang
-   selalu Set kosong dari pemanggilnya (tidak pernah efektif). Keunikan
-   kode tetap dijamin oleh transaction (lihat playEgg), jadi parameter
-   yang tidak berguna itu dihapus. */
-function genWinnerCode(){
+/* Kode dealer pendek (dari dealerId) ditambahkan ke Winner Code supaya
+   PIC bisa langsung tahu kode itu milik dealer mana hanya dari teksnya. */
+function dealerCodeTag(dealerId){
+  const alnum = String(dealerId||'').replace(/[^a-zA-Z0-9]/g,'').toUpperCase();
+  return alnum.slice(0,4) || 'GEN';
+}
+function genWinnerCode(dealerId){
   const now = new Date();
   const ymd = pad(now.getFullYear()%100,2)+pad(now.getMonth()+1,2)+pad(now.getDate(),2);
   const num = secureRandomInt(100000);
-  return 'PET-'+ymd+'-'+pad(num,5);
+  return 'PET-'+dealerCodeTag(dealerId)+'-'+ymd+'-'+pad(num,5);
 }
 
 function escapeHtml(str){
   return String(str).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 }
-/* PERBAIKAN: dulu URL gambar hadiah dimasukkan ke innerHTML tanpa
-   escaping sama sekali -> celah stored-XSS kalau field image berisi
-   karakter aneh. Sekarang selalu melewati escapeHtml, dan hanya
-   dirender kalau memang diawali http(s):// */
 function safeImageTag(url){
   const trimmed = String(url||'').trim();
   if(!/^https?:\/\//i.test(trimmed)) return '';
@@ -921,32 +960,22 @@ function safeImageTag(url){
 }
 
 /* =========================================================
-   ANTI-CHEAT — playtracker (PERBAIKAN UTAMA)
-   Dulu: findPriorPlays() mengambil SEMUA dokumen di `records`
-   (nama, no HP, dealer, cabang milik SELURUH peserta) ke browser
-   setiap kali seseorang mengisi form, lalu difilter di client.
-   Itu artinya siapapun bisa buka DevTools dan melihat data semua
-   peserta lain.
-
-   Sekarang: 1 dokumen kecil per peserta di collection `playtracker`,
-   ID dokumennya = kunci unik peserta (hp, atau nama|dealer|cabang).
-   Cek "sudah main belum" jadi 1x `getDoc` by ID (bukan `list` semua
-   data), dan Firestore Rules membatasi counter ini agar hanya naik
-   1-1 dan tidak bisa melebihi batas main (settings.maxPlay) —
-   sehingga tetap aman walau seseorang mencoba panggil Firestore SDK
-   langsung dari console browser tanpa lewat UI.
+   ANTI-CHEAT — playtracker
+   1 dokumen kecil per No. HP unik DI DALAM dealer ini
+   (dealers/{dealerId}/playtracker/{trackerKey}). Karena game hanya
+   dimainkan saat serah terima unit (bukan dibuka bebas oleh publik),
+   HP di sini wajib diisi dan langsung dipakai sebagai kunci utama —
+   tidak ada lagi fallback nama+dealer+cabang seperti versi lama.
    ========================================================= */
-function computeTrackerKey({nama, dealer, cabang, hp}){
-  const normHp = (hp||'').replace(/\D/g,'');
-  if(normHp) return 'hp_'+normHp;
-  const raw = [nama,dealer,cabang].map(s=>String(s||'').trim().toLowerCase()).join('|');
-  return 'id_'+raw.replace(/[^a-z0-9|]+/g,'_');
+function computeTrackerKey(hp){
+  const normHp = String(hp||'').replace(/\D/g,'');
+  return 'hp_'+normHp;
 }
-
-async function getPlayCount(trackerKey){
-  const snap = await getDoc(doc(db,'playtracker',trackerKey));
+async function getPlayCount(dealerId, trackerKey){
+  const snap = await getDoc(doc(db,'dealers',dealerId,'playtracker',trackerKey));
   return snap.exists() ? Number(snap.data().count||0) : 0;
 }
+const ALREADY_USED_MSG = 'Nomor Anda sudah pernah digunakan.';
 
 /* =========================================================
    STATE (current participant in flow)
@@ -957,17 +986,18 @@ let currentParticipant = null;
    LANDING
    ========================================================= */
 function renderLandingInfo(){
-  $('#landing-title').innerHTML = escapeHtml(settings.programName||'Pecah Telur').replace(/^(\S+)/, '$1 <span>Telur</span>');
-  $('#landing-disclaimer').textContent = settings.disclaimer || '';
+  $('#landing-dealer-name').textContent = currentDealer.name + (currentDealer.cabang ? ' · '+currentDealer.cabang : '');
+  $('#landing-title').innerHTML = escapeHtml(currentDealer.programName||'Pecah Telur').replace(/^(\S+)/, '$1 <span>Telur</span>');
+  $('#landing-disclaimer').textContent = currentDealer.disclaimer || '';
 
   const note = $('#landing-period-note');
-  if(!settings.active){
+  if(!currentDealer.active){
     note.style.display='block';
-    note.textContent = 'Program sedang tidak aktif saat ini. Silakan hubungi panitia untuk informasi lebih lanjut.';
+    note.textContent = 'Program sedang tidak aktif saat ini di dealer ini. Silakan hubungi panitia untuk informasi lebih lanjut.';
     $('#btn-start').disabled = true;
-  } else if(settings.periodStart && settings.periodEnd){
+  } else if(currentDealer.periodStart && currentDealer.periodEnd){
     note.style.display='block';
-    note.textContent = 'Periode program: '+settings.periodStart+' s/d '+settings.periodEnd;
+    note.textContent = 'Periode program: '+currentDealer.periodStart+' s/d '+currentDealer.periodEnd;
     $('#btn-start').disabled = false;
   } else {
     note.style.display='none';
@@ -977,56 +1007,59 @@ function renderLandingInfo(){
 
 $('#btn-start').addEventListener('click', ()=>{
   $('#form-alert').style.display='none';
+  $('#form-dealer-info').style.display='block';
+  $('#form-dealer-info').textContent = 'Kamu akan bermain untuk: '+currentDealer.name+(currentDealer.cabang? ' · '+currentDealer.cabang:'');
   showScreen('screen-form');
 });
 $('#btn-back-form').addEventListener('click', ()=> showScreen('screen-landing'));
 $('#link-admin').addEventListener('click', ()=> showScreen('screen-admin-login'));
-$('#btn-back-adminlogin').addEventListener('click', ()=> showScreen('screen-landing'));
+$('#link-admin-2').addEventListener('click', ()=> showScreen('screen-admin-login'));
+$('#btn-back-adminlogin').addEventListener('click', ()=> showScreen(currentDealer ? 'screen-landing' : 'screen-dealer-invalid'));
 
 /* =========================================================
    FORM PESERTA
    ========================================================= */
 function clearFormErrors(){
-  ['f-nama','f-dealer','f-cabang'].forEach(id=> $('#'+id).classList.remove('has-error'));
+  ['f-nama','f-hp'].forEach(id=> $('#'+id).classList.remove('has-error'));
   $('#form-alert').style.display='none';
 }
 
 $('#btn-submit-form').addEventListener('click', async ()=>{
   clearFormErrors();
   const nama = $('#input-nama').value.trim();
-  const dealer = $('#input-dealer').value.trim();
-  const cabang = $('#input-cabang').value.trim();
   const hp = $('#input-hp').value.trim();
   const promo = $('#input-promo').value.trim();
+  const normHp = hp.replace(/\D/g,'');
 
   let valid = true;
   if(!nama){ $('#f-nama').classList.add('has-error'); valid=false; }
-  if(!dealer){ $('#f-dealer').classList.add('has-error'); valid=false; }
-  if(!cabang){ $('#f-cabang').classList.add('has-error'); valid=false; }
+  if(!normHp || normHp.length<8){ $('#f-hp').classList.add('has-error'); valid=false; }
   if(!valid) return;
 
-  settings = await fetchSettings();
-
-  if(!settings.active){
+  // refresh data dealer terbaru sebelum cek eligibility
+  currentDealer = await fetchDealer(currentDealerId);
+  if(!currentDealer || !currentDealer.active){
     $('#form-alert').style.display='block';
-    $('#form-alert').textContent = 'Mohon maaf, program sedang tidak aktif.';
+    $('#form-alert').textContent = 'Mohon maaf, program sedang tidak aktif di dealer ini.';
     return;
   }
 
   // Cek eligibility awal (ramah, cepat). Pengecekan yang SEBENARNYA
   // mengikat tetap terjadi di dalam transaction saat tombol "Pecahkan
-  // Telur" ditekan + di Firestore Rules — ini hanya agar peserta tidak
-  // perlu sampai ke layar telur dulu baru tahu sudah tidak eligible.
-  const trackerKey = computeTrackerKey({nama, dealer, cabang, hp});
-  const currentCount = await getPlayCount(trackerKey);
-  const maxPlay = Number(settings.maxPlay||1);
+  // Telur" ditekan + di Firestore Rules.
+  const trackerKey = computeTrackerKey(hp);
+  const currentCount = await getPlayCount(currentDealerId, trackerKey);
+  const maxPlay = Number(currentDealer.maxPlay||1);
   if(currentCount >= maxPlay){
     $('#form-alert').style.display='block';
-    $('#form-alert').textContent = 'Kamu sudah mencapai batas maksimal bermain ('+maxPlay+'x) pada program ini.';
+    $('#form-alert').textContent = ALREADY_USED_MSG;
     return;
   }
 
-  currentParticipant = {nama, dealer, cabang, hp, promo, trackerKey};
+  currentParticipant = {
+    nama, hp, promo, trackerKey,
+    dealer: currentDealer.name, cabang: currentDealer.cabang || ''
+  };
   $('#game-nama-peserta').textContent = nama;
   resetEggVisual();
   showScreen('screen-game');
@@ -1042,18 +1075,16 @@ function resetEggVisual(){
   $('#btn-break').textContent = 'Pecahkan Telur!';
 }
 
-/* PERBAIKAN UTAMA: dulu ada 2 fungsi terpisah (decrementRewardStock
-   dan createUniqueRecordDoc) yang dipanggil berurutan (tidak atomik
-   satu sama lain, dan tidak pernah mengecek/menaikkan batas main).
-   Sekarang SATU transaction yang membaca+menulis playtracker, rewards,
-   dan records sekaligus — kalau salah satu gagal (stok habis, kode
-   bentrok, atau batas main sudah tercapai), semuanya dibatalkan
-   bersama dan dicoba ulang dengan hadiah/kode berbeda. */
-async function attemptPlay(participant, rewardCandidate, maxPlay){
-  const trackerRef = doc(db,'playtracker',participant.trackerKey);
-  const rewardRef = doc(db,'rewards',rewardCandidate.id);
-  const code = genWinnerCode();
-  const recordRef = doc(db,'records',code);
+/* SATU transaction yang membaca+menulis playtracker, rewards, dan
+   records sekaligus — kalau salah satu gagal (stok habis, kode
+   bentrok, atau nomor HP sudah pernah dipakai di dealer ini),
+   semuanya dibatalkan bersama dan dicoba ulang dengan hadiah/kode
+   berbeda. */
+async function attemptPlay(dealerId, participant, rewardCandidate, maxPlay){
+  const trackerRef = doc(db,'dealers',dealerId,'playtracker',participant.trackerKey);
+  const rewardRef = doc(db,'dealers',dealerId,'rewards',rewardCandidate.id);
+  const code = genWinnerCode(dealerId);
+  const recordRef = doc(db,'dealers',dealerId,'records',code);
 
   const result = await runTransaction(db, async (tx)=>{
     const trackerSnap = await tx.get(trackerRef);
@@ -1073,7 +1104,7 @@ async function attemptPlay(participant, rewardCandidate, maxPlay){
       nama: participant.nama,
       dealer: participant.dealer,
       cabang: participant.cabang,
-      hp: participant.hp || '',
+      hp: participant.hp,
       promo: participant.promo || '',
       rewardId: rewardRef.id,
       rewardName: rewardData.name,
@@ -1085,7 +1116,7 @@ async function attemptPlay(participant, rewardCandidate, maxPlay){
     tx.update(rewardRef, { stock: Number(rewardData.stock) - 1 });
     tx.set(trackerRef, {
       count: currentCount + 1,
-      nama: participant.nama, dealer: participant.dealer, cabang: participant.cabang,
+      nama: participant.nama,
       lastPlayedAt: new Date().toISOString()
     }, { merge:true });
     tx.set(recordRef, recordData);
@@ -1102,10 +1133,10 @@ $('#btn-break').addEventListener('click', async ()=>{
   btn.disabled = true;
   btn.textContent = 'Memproses...';
 
-  settings = await fetchSettings();
-  const maxPlay = Number(settings.maxPlay||1);
+  currentDealer = await fetchDealer(currentDealerId);
+  const maxPlay = Number((currentDealer && currentDealer.maxPlay) || 1);
 
-  rewards = await fetchRewards();
+  rewards = await fetchRewards(currentDealerId);
   let candidatePool = rewards.filter(r=> r.active && Number(r.stock)>0);
   if(candidatePool.length===0){
     toast('Maaf, stok hadiah sedang habis. Hubungi panitia.');
@@ -1120,7 +1151,7 @@ $('#btn-break').addEventListener('click', async ()=>{
   while(!finalResult && candidatePool.length>0 && attempts<8){
     const picked = weightedPick(candidatePool);
     try{
-      finalResult = await attemptPlay(currentParticipant, picked, maxPlay);
+      finalResult = await attemptPlay(currentDealerId, currentParticipant, picked, maxPlay);
     }catch(e){
       if(e.message === 'max-play-reached'){ blockedByMaxPlay = true; break; }
       if(e.message === 'reward-out-of-stock' || e.message === 'reward-missing'){
@@ -1132,7 +1163,7 @@ $('#btn-break').addEventListener('click', async ()=>{
   }
 
   if(blockedByMaxPlay){
-    toast('Kamu sudah mencapai batas maksimal bermain.');
+    toast(ALREADY_USED_MSG);
     btn.disabled = false; btn.textContent = 'Pecahkan Telur!';
     return;
   }
@@ -1188,8 +1219,7 @@ function renderResult(rec, reward){
   $('#result-code').textContent = rec.code;
 }
 $('#btn-result-home').addEventListener('click', ()=>{
-  $('#input-nama').value=''; $('#input-dealer').value=''; $('#input-cabang').value='';
-  $('#input-hp').value=''; $('#input-promo').value='';
+  $('#input-nama').value=''; $('#input-hp').value=''; $('#input-promo').value='';
   showScreen('screen-landing');
 });
 
@@ -1211,21 +1241,78 @@ $('#btn-admin-login').addEventListener('click', async ()=>{
 });
 $('#btn-admin-logout').addEventListener('click', async ()=>{
   await signOut(auth);
+  dealersList = []; adminDealerId = null; currentAdminDealer = null;
   try{ await signInAnonymously(auth); }catch(e){ console.error(e); }
-  showScreen('screen-landing');
+  showScreen(currentDealer ? 'screen-landing' : 'screen-dealer-invalid');
 });
 
 async function enterAdmin(){
-  await ensureSeeded();
-  rewards = await fetchRewards();
-  records = await fetchRecords();
-  settings = await fetchSettings();
+  dealersList = await fetchDealers();
+  adminDealerId = dealersList.length ? dealersList[0].id : null;
+  renderDealerSwitcher();
+  if(adminDealerId){ await loadAdminDealerData(); } else { renderEmptyAdminPanels(); }
+  showScreen('screen-admin');
+}
+
+async function loadAdminDealerData(){
+  currentAdminDealer = dealersList.find(d=>d.id===adminDealerId) || null;
+  rewards = await fetchRewards(adminDealerId);
+  records = await fetchRecords(adminDealerId);
   renderOverview();
   renderRewardsList();
   renderRecordsTable();
   fillSettingsForm();
-  showScreen('screen-admin');
 }
+function renderEmptyAdminPanels(){
+  currentAdminDealer = null;
+  rewards = []; records = [];
+  renderOverview(); renderRewardsList(); renderRecordsTable(); fillSettingsForm();
+}
+
+/* =========================================================
+   ADMIN — DEALER SWITCHER
+   ========================================================= */
+function renderDealerSwitcher(){
+  const sel = $('#admin-dealer-select');
+  if(dealersList.length===0){
+    sel.innerHTML = '<option value="">Belum ada dealer — klik "+ Dealer"</option>';
+    return;
+  }
+  sel.innerHTML = dealersList.map(d=>
+    `<option value="${escapeHtml(d.id)}" ${d.id===adminDealerId?'selected':''}>${escapeHtml(d.name)}${d.cabang?' · '+escapeHtml(d.cabang):''}</option>`
+  ).join('');
+}
+$('#admin-dealer-select').addEventListener('change', async (e)=>{
+  adminDealerId = e.target.value || null;
+  if(adminDealerId){ await loadAdminDealerData(); } else { renderEmptyAdminPanels(); }
+});
+$('#btn-copy-dealer-link').addEventListener('click', async ()=>{
+  if(!adminDealerId){ toast('Tambahkan dealer dulu'); return; }
+  const link = dealerPublicLink(adminDealerId);
+  try{
+    await navigator.clipboard.writeText(link);
+    toast('Link disalin ke clipboard');
+  }catch(e){
+    toast('Link: '+link);
+  }
+});
+$('#btn-add-dealer').addEventListener('click', ()=>{
+  $('#dl-name').value=''; $('#dl-cabang').value='';
+  $('#modal-dealer').classList.add('active');
+});
+$('#btn-cancel-dealer').addEventListener('click', ()=> $('#modal-dealer').classList.remove('active'));
+$('#btn-save-dealer').addEventListener('click', async ()=>{
+  const name = $('#dl-name').value.trim();
+  const cabang = $('#dl-cabang').value.trim();
+  if(!name){ toast('Nama dealer wajib diisi'); return; }
+  const id = await createDealer(name, cabang);
+  dealersList = await fetchDealers();
+  adminDealerId = id;
+  renderDealerSwitcher();
+  await loadAdminDealerData();
+  $('#modal-dealer').classList.remove('active');
+  toast('Dealer ditambahkan. Link: '+dealerPublicLink(id));
+});
 
 /* =========================================================
    ADMIN TABS
@@ -1240,11 +1327,11 @@ $all('.admin-tab').forEach(tab=>{
 });
 
 /* =========================================================
-   ADMIN — OVERVIEW
+   ADMIN — OVERVIEW (khusus dealer yang sedang dipilih)
    ========================================================= */
 function renderOverview(){
   const totalPlays = records.length;
-  const uniqueParticipants = new Set(records.map(r=> (r.hp && r.hp.replace(/\D/g,'')) || (r.nama+'|'+r.dealer+'|'+r.cabang).toLowerCase())).size;
+  const uniqueParticipants = new Set(records.map(r=> (r.hp||'').replace(/\D/g,''))).size;
   const totalWinners = records.length; // setiap play valid = 1 reward
   const claimed = records.filter(r=>r.status==='CLAIMED').length;
   const unclaimed = records.filter(r=>r.status==='UNCLAIMED').length;
@@ -1263,24 +1350,11 @@ function renderOverview(){
         <div class="meta"><div class="nm">${escapeHtml(r.name)}</div><div class="sub">Weight ${Number(r.weight)} · ${r.active?'Aktif':'Nonaktif'}</div></div>
       </div>
       <div style="text-align:right;"><div style="font-weight:800;font-size:16px;color:var(--red);">${Number(r.stock)}</div><div style="font-size:10px;color:var(--ink-soft);">sisa stok</div></div>
-    </div>`).join('') || '<p style="font-size:12.5px;color:var(--ink-soft);">Belum ada hadiah.</p>';
-
-  const byDealer = groupCount(records, 'dealer');
-  $('#tbl-by-dealer tbody').innerHTML = Object.entries(byDealer).map(([k,v])=>
-    `<tr><td>${escapeHtml(k)}</td><td>${v}</td><td>${v}</td></tr>`).join('') || '<tr><td colspan="3" style="color:var(--ink-soft);">Belum ada data</td></tr>';
-
-  const byCabang = groupCount(records, 'cabang');
-  $('#tbl-by-cabang tbody').innerHTML = Object.entries(byCabang).map(([k,v])=>
-    `<tr><td>${escapeHtml(k)}</td><td>${v}</td><td>${v}</td></tr>`).join('') || '<tr><td colspan="3" style="color:var(--ink-soft);">Belum ada data</td></tr>';
-}
-function groupCount(list, field){
-  const out = {};
-  list.forEach(r=>{ const k=r[field]||'-'; out[k]=(out[k]||0)+1; });
-  return out;
+    </div>`).join('') || '<p style="font-size:12.5px;color:var(--ink-soft);">Belum ada hadiah untuk dealer ini.</p>';
 }
 
 /* =========================================================
-   ADMIN — REWARDS CRUD
+   ADMIN — REWARDS CRUD (khusus dealer yang sedang dipilih)
    ========================================================= */
 function renderRewardsList(){
   const wrap = $('#rewards-list');
@@ -1305,7 +1379,10 @@ function renderRewardsList(){
   wrap.querySelectorAll('[data-del]').forEach(b=> b.addEventListener('click', ()=> deleteReward(b.dataset.del)));
 }
 
-$('#btn-add-reward').addEventListener('click', ()=> openRewardModal(null));
+$('#btn-add-reward').addEventListener('click', ()=>{
+  if(!adminDealerId){ toast('Tambahkan dealer dulu'); return; }
+  openRewardModal(null);
+});
 $('#btn-cancel-reward').addEventListener('click', ()=> $('#modal-reward').classList.remove('active'));
 
 function openRewardModal(id){
@@ -1323,6 +1400,7 @@ function openRewardModal(id){
 }
 
 $('#btn-save-reward').addEventListener('click', async ()=>{
+  if(!adminDealerId){ toast('Tambahkan dealer dulu'); return; }
   const id = $('#rw-id').value;
   const name = $('#rw-name').value.trim();
   if(!name){ toast('Nama hadiah wajib diisi'); return; }
@@ -1341,8 +1419,8 @@ $('#btn-save-reward').addEventListener('click', async ()=>{
     active: $('#rw-active').checked
   };
   const rewardId = id || ('r_'+Date.now());
-  await setDoc(doc(db,'rewards',rewardId), data, {merge:true});
-  rewards = await fetchRewards();
+  await setDoc(doc(db,'dealers',adminDealerId,'rewards',rewardId), data, {merge:true});
+  rewards = await fetchRewards(adminDealerId);
   $('#modal-reward').classList.remove('active');
   renderRewardsList(); renderOverview();
   toast('Hadiah disimpan');
@@ -1350,20 +1428,20 @@ $('#btn-save-reward').addEventListener('click', async ()=>{
 
 async function toggleReward(id){
   const r = rewards.find(x=>x.id===id);
-  if(r){ await updateDoc(doc(db,'rewards',id), {active: !r.active}); }
-  rewards = await fetchRewards();
+  if(r){ await updateDoc(doc(db,'dealers',adminDealerId,'rewards',id), {active: !r.active}); }
+  rewards = await fetchRewards(adminDealerId);
   renderRewardsList(); renderOverview();
 }
 async function deleteReward(id){
   if(!confirm('Hapus hadiah ini?')) return;
-  await deleteDoc(doc(db,'rewards',id));
-  rewards = await fetchRewards();
+  await deleteDoc(doc(db,'dealers',adminDealerId,'rewards',id));
+  rewards = await fetchRewards(adminDealerId);
   renderRewardsList(); renderOverview();
   toast('Hadiah dihapus');
 }
 
 /* =========================================================
-   ADMIN — RECORDS / WINNERS
+   ADMIN — RECORDS / WINNERS (khusus dealer yang sedang dipilih)
    ========================================================= */
 let claimTargetId = null;
 
@@ -1375,9 +1453,8 @@ function renderRecordsTable(){
   let list = [...records].reverse();
   if(q){
     list = list.filter(r=>
-      r.nama.toLowerCase().includes(q) || r.dealer.toLowerCase().includes(q) ||
-      r.cabang.toLowerCase().includes(q) || r.code.toLowerCase().includes(q) ||
-      r.rewardName.toLowerCase().includes(q));
+      r.nama.toLowerCase().includes(q) || (r.hp||'').toLowerCase().includes(q) ||
+      r.code.toLowerCase().includes(q) || r.rewardName.toLowerCase().includes(q));
   }
   if(statusF) list = list.filter(r=>r.status===statusF);
   if(dateF) list = list.filter(r=> r.timestamp.slice(0,10)===dateF);
@@ -1386,13 +1463,12 @@ function renderRecordsTable(){
     <tr>
       <td>${fmtDate(r.timestamp)}</td>
       <td>${escapeHtml(r.nama)}</td>
-      <td>${escapeHtml(r.dealer)}</td>
-      <td>${escapeHtml(r.cabang)}</td>
+      <td>${escapeHtml(r.hp||'-')}</td>
       <td>${escapeHtml(r.rewardName)}</td>
       <td><b>${escapeHtml(r.code)}</b></td>
       <td><span class="pill ${r.status==='CLAIMED'?'pill-claimed':'pill-unclaimed'}">${escapeHtml(r.status)}</span></td>
       <td>${r.status==='UNCLAIMED' ? `<button class="btn btn-secondary btn-sm" data-claim="${escapeHtml(r.id)}">Verifikasi</button>` : (r.claimPic? 'oleh '+escapeHtml(r.claimPic):'-')}</td>
-    </tr>`).join('') || '<tr><td colspan="8" style="color:var(--ink-soft);">Belum ada data peserta.</td></tr>';
+    </tr>`).join('') || '<tr><td colspan="7" style="color:var(--ink-soft);">Belum ada data peserta.</td></tr>';
 
   $all('[data-claim]').forEach(b=> b.addEventListener('click', ()=> openClaimModal(b.dataset.claim)));
 }
@@ -1413,58 +1489,66 @@ $('#btn-confirm-claim').addEventListener('click', async ()=>{
   const pic = $('#claim-pic-name').value.trim();
   if(!pic){ toast('Nama PIC wajib diisi'); return; }
   const claimTime = new Date().toISOString();
-  await updateDoc(doc(db,'records',claimTargetId), {status:'CLAIMED', claimTime, claimPic:pic});
-  records = await fetchRecords();
+  await updateDoc(doc(db,'dealers',adminDealerId,'records',claimTargetId), {status:'CLAIMED', claimTime, claimPic:pic});
+  records = await fetchRecords(adminDealerId);
   $('#modal-claim').classList.remove('active');
   renderRecordsTable(); renderOverview();
   toast('Hadiah ditandai CLAIMED');
 });
 
 $('#btn-verify-code').addEventListener('click', async ()=>{
+  if(!adminDealerId){ toast('Pilih dealer dulu'); return; }
   const code = $('#verify-code-input').value.trim().toUpperCase();
   const out = $('#verify-result');
-  const snap = await getDoc(doc(db,'records',code));
+  const snap = await getDoc(doc(db,'dealers',adminDealerId,'records',code));
   if(!snap.exists()){
-    out.innerHTML = '<span style="color:var(--danger);font-weight:700;">INVALID</span> — Kode tidak ditemukan.';
+    out.innerHTML = '<span style="color:var(--danger);font-weight:700;">INVALID</span> — Kode tidak ditemukan di dealer ini.';
     return;
   }
   const rec = {id:snap.id, code:snap.id, ...snap.data()};
-  out.innerHTML = `<b>${escapeHtml(rec.status)}</b> — ${escapeHtml(rec.nama)} (${escapeHtml(rec.dealer)}, ${escapeHtml(rec.cabang)}) memenangkan <b>${escapeHtml(rec.rewardName)}</b> pada ${fmtDate(rec.timestamp)}.`
+  out.innerHTML = `<b>${escapeHtml(rec.status)}</b> — ${escapeHtml(rec.nama)} (${escapeHtml(rec.hp||'-')}) memenangkan <b>${escapeHtml(rec.rewardName)}</b> pada ${fmtDate(rec.timestamp)}.`
     + (rec.status==='UNCLAIMED' ? ` <button class="btn btn-secondary btn-sm" style="margin-top:8px;" id="verify-claim-now">Verifikasi Sekarang</button>` : '');
   const btnNow = document.getElementById('verify-claim-now');
   if(btnNow) btnNow.addEventListener('click', ()=> openClaimModal(rec.id));
 });
 
 $('#btn-export-csv').addEventListener('click', ()=>{
-  const headers = ['Timestamp','Nama','Dealer','Cabang','No HP','Kode Promo','Hadiah','Winner Code','Status','Waktu Klaim','PIC Klaim'];
+  const headers = ['Timestamp','Nama','No HP','Kode Promo','Hadiah','Winner Code','Status','Waktu Klaim','PIC Klaim'];
   const rows = records.map(r=>[
-    r.timestamp, r.nama, r.dealer, r.cabang, r.hp||'', r.promo||'', r.rewardName, r.code, r.status, r.claimTime||'', r.claimPic||''
+    r.timestamp, r.nama, r.hp||'', r.promo||'', r.rewardName, r.code, r.status, r.claimTime||'', r.claimPic||''
   ]);
   const csv = [headers, ...rows].map(row=>
     row.map(cell=> '"'+String(cell).replace(/"/g,'""')+'"').join(',')
   ).join('\n');
-  const blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8;'});
+  const blob = new Blob(['﻿'+csv], {type:'text/csv;charset=utf-8;'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href = url; a.download = 'pecah-telur-peserta-'+new Date().toISOString().slice(0,10)+'.csv';
+  const dealerSlug = currentAdminDealer ? slugify(currentAdminDealer.name) : (adminDealerId||'dealer');
+  a.href = url; a.download = 'pecah-telur-'+dealerSlug+'-'+new Date().toISOString().slice(0,10)+'.csv';
   document.body.appendChild(a); a.click(); a.remove();
   URL.revokeObjectURL(url);
   toast('CSV diunduh');
 });
 
 /* =========================================================
-   ADMIN — SETTINGS
+   ADMIN — SETTINGS (identitas + pengaturan dealer yang dipilih)
    ========================================================= */
 function fillSettingsForm(){
-  $('#set-program-name').value = settings.programName || '';
-  $('#set-period-start').value = settings.periodStart || '';
-  $('#set-period-end').value = settings.periodEnd || '';
-  $('#set-active').checked = !!settings.active;
-  $('#set-maxplay').value = settings.maxPlay || 1;
-  $('#set-disclaimer').value = settings.disclaimer || '';
+  const d = currentAdminDealer || {};
+  $('#set-dealer-name').value = d.name || '';
+  $('#set-dealer-cabang').value = d.cabang || '';
+  $('#set-program-name').value = d.programName || 'Pecah Telur';
+  $('#set-period-start').value = d.periodStart || '';
+  $('#set-period-end').value = d.periodEnd || '';
+  $('#set-active').checked = !!d.active;
+  $('#set-maxplay').value = d.maxPlay || 1;
+  $('#set-disclaimer').value = d.disclaimer || '';
 }
 $('#btn-save-settings').addEventListener('click', async ()=>{
-  const newSettings = {
+  if(!adminDealerId){ toast('Tambahkan dealer dulu'); return; }
+  const newData = {
+    name: $('#set-dealer-name').value.trim() || (currentAdminDealer ? currentAdminDealer.name : 'Dealer'),
+    cabang: $('#set-dealer-cabang').value.trim(),
     programName: $('#set-program-name').value.trim() || 'Pecah Telur',
     periodStart: $('#set-period-start').value,
     periodEnd: $('#set-period-end').value,
@@ -1472,25 +1556,26 @@ $('#btn-save-settings').addEventListener('click', async ()=>{
     maxPlay: Math.max(1, parseInt($('#set-maxplay').value)||1),
     disclaimer: $('#set-disclaimer').value.trim()
   };
-  await saveSettings(newSettings);
-  settings = await fetchSettings();
-  toast('Pengaturan disimpan');
-  renderLandingInfo();
+  await setDoc(doc(db,'dealers',adminDealerId), newData, {merge:true});
+  dealersList = await fetchDealers();
+  currentAdminDealer = dealersList.find(d=>d.id===adminDealerId) || null;
+  renderDealerSwitcher();
+  toast('Pengaturan dealer disimpan');
 });
 
 $('#btn-reset-data').addEventListener('click', async ()=>{
-  if(!confirm('Yakin reset SEMUA data peserta, pemenang, dan stok hadiah? Tindakan ini permanen.')) return;
-  const recSnap = await getDocs(collection(db,'records'));
+  if(!adminDealerId){ toast('Pilih dealer dulu'); return; }
+  const dName = currentAdminDealer ? currentAdminDealer.name : adminDealerId;
+  if(!confirm('Yakin reset SEMUA data peserta, pemenang, dan stok hadiah untuk dealer "'+dName+'"? Dealer lain tidak terpengaruh. Tindakan ini permanen.')) return;
+  const recSnap = await getDocs(collection(db,'dealers',adminDealerId,'records'));
   for(const d of recSnap.docs){ await deleteDoc(d.ref); }
-  const rwSnap = await getDocs(collection(db,'rewards'));
+  const rwSnap = await getDocs(collection(db,'dealers',adminDealerId,'rewards'));
   for(const d of rwSnap.docs){ await deleteDoc(d.ref); }
-  const trackerSnap = await getDocs(collection(db,'playtracker'));
+  const trackerSnap = await getDocs(collection(db,'dealers',adminDealerId,'playtracker'));
   for(const d of trackerSnap.docs){ await deleteDoc(d.ref); }
-  for(const r of DEFAULT_REWARDS){ await setDoc(doc(db,'rewards',r.id), r); }
-  rewards = await fetchRewards();
-  records = await fetchRecords();
-  renderOverview(); renderRewardsList(); renderRecordsTable();
-  toast('Semua data direset');
+  await seedDealerRewards(adminDealerId);
+  await loadAdminDealerData();
+  toast('Data dealer "'+dName+'" direset');
 });
 
 /* =========================================================
@@ -1498,7 +1583,12 @@ $('#btn-reset-data').addEventListener('click', async ()=>{
    Anonymous auth dipakai untuk peserta biasa (dibutuhkan oleh
    Firestore security rules di firestore.rules). Login admin
    pakai email/password menggantikan sesi anonim untuk tab ini.
+   Dealer publik ditentukan dari query string ?dealer=<id> — setiap
+   dealer punya link sendiri, dibagikan lewat QR di titik serah
+   terima unit.
    ========================================================= */
+const dealerParam = (new URLSearchParams(location.search).get('dealer')||'').trim();
+
 async function init(){
   onAuthStateChanged(auth, async (user)=>{
     if(user && !user.isAnonymous){
@@ -1514,11 +1604,23 @@ async function init(){
     return;
   }
 
+  if(!dealerParam){
+    $('#dealer-invalid-msg').textContent = 'Link tidak lengkap. Silakan gunakan link atau scan QR resmi dari dealer Anda.';
+    showScreen('screen-dealer-invalid');
+    return;
+  }
+
   try{
-    settings = await fetchSettings();
+    currentDealerId = dealerParam;
+    currentDealer = await fetchDealer(currentDealerId);
+    if(!currentDealer){
+      $('#dealer-invalid-msg').textContent = 'Dealer tidak ditemukan. Pastikan Anda membuka link yang benar.';
+      showScreen('screen-dealer-invalid');
+      return;
+    }
     renderLandingInfo();
   }catch(e){
-    console.error('Gagal memuat settings', e);
+    console.error('Gagal memuat data dealer', e);
     showScreen('screen-config-gate');
   }
 }
