@@ -1780,9 +1780,15 @@ $('#btn-reset-data').addEventListener('click', async ()=>{
 const dealerParam = (new URLSearchParams(location.search).get('dealer')||'').trim();
 
 async function init(){
+  console.log('[DEBUG] projectId aktif:', app.options.projectId, '| authDomain:', app.options.authDomain);
   onAuthStateChanged(auth, async (user)=>{
+    console.log('[DEBUG] auth state berubah:', user ? {uid:user.uid, isAnonymous:user.isAnonymous, email:user.email} : null);
     if(user && !user.isAnonymous){
-      await enterAdmin();
+      try{
+        await enterAdmin();
+      }catch(e){
+        console.error('[DEBUG] enterAdmin gagal. code:', e.code, '| message:', e.message, e);
+      }
     }
   });
 
