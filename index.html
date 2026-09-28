@@ -800,6 +800,27 @@ const db = getFirestore(app);
 const auth = getAuth(app);
 
 /* =========================================================
+   GOOGLE SHEETS WEBHOOK (opsional)
+   Isi 2 nilai ini dengan URL Web App Apps Script kamu (diakhiri /exec)
+   dan kode rahasia yang kamu set di script itu, supaya setiap hasil
+   main otomatis tercatat juga sebagai baris baru di Google Sheets.
+   Biarkan SHEET_WEBHOOK_URL kosong kalau belum mau pakai fitur ini —
+   game tetap jalan normal lewat Firestore seperti biasa.
+   ========================================================= */
+const SHEET_WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbysVrkzmATSNmfcrQTtxYl-8tfwNom93St_DxrAdwHRwqTIU7aaQDUUP191pVCuOL1L/exec';
+const SHEET_WEBHOOK_SECRET = 'SIMASFIN SPECIAL DEAL';
+
+function pushToSheet(payload){
+  if(!SHEET_WEBHOOK_URL) return;
+  fetch(SHEET_WEBHOOK_URL, {
+    method:'POST',
+    mode:'no-cors',
+    headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body: JSON.stringify({...payload, secret: SHEET_WEBHOOK_SECRET})
+  }).catch(e=> console.error('Gagal kirim ke Google Sheets (diabaikan, tidak mengganggu game):', e));
+}
+
+/* =========================================================
    DATA LAYER — Firestore (struktur multi-dealer)
    Koleksi:
    - dealers/{dealerId}                       : identitas + pengaturan 1 dealer
@@ -1172,6 +1193,17 @@ $('#btn-break').addEventListener('click', async ()=>{
     btn.disabled = false; btn.textContent = 'Pecahkan Telur!';
     return;
   }
+
+  pushToSheet({
+    timestamp: finalResult.record.timestamp,
+    dealer: finalResult.record.dealer,
+    cabang: finalResult.record.cabang,
+    nama: finalResult.record.nama,
+    hp: finalResult.record.hp,
+    rewardName: finalResult.record.rewardName,
+    code: finalResult.record.code,
+    status: finalResult.record.status
+  });
 
   wrap.classList.add('shaking');
   setTimeout(()=>{
