@@ -306,14 +306,7 @@
   .dealer-switch-bar select{
     flex:1;min-width:160px;padding:10px 12px;border-radius:10px;border:1.5px solid #EBD9C8;font-size:12.5px;background:var(--white);
   }
-  .report-filter-bar{
-    padding:10px 20px;background:var(--gold-soft);border-bottom:1px solid #F0E2CC;
-    display:flex;gap:8px;align-items:center;justify-content:space-between;position:sticky;top:53px;z-index:6;
-  }
-  .report-filter-bar .lbl{font-size:11.5px;color:var(--red-dark);font-weight:700;}
-  .bar-mini{background:#F1E5D2;border-radius:100px;height:8px;overflow:hidden;}
-  .bar-mini .fill{height:100%;border-radius:100px;background:linear-gradient(90deg,var(--gold),var(--red));}
-  .admin-tabs{display:flex;gap:6px;padding:12px 16px 0;overflow-x:auto;background:var(--white);border-bottom:1px solid #F0E2CC;position:sticky;top:98px;z-index:5;}
+  .admin-tabs{display:flex;gap:6px;padding:12px 16px 0;overflow-x:auto;background:var(--white);border-bottom:1px solid #F0E2CC;position:sticky;top:53px;z-index:5;}
   .admin-tab{
     padding:10px 14px;font-size:12.5px;font-weight:700;color:var(--ink-soft);
     border-bottom:2.5px solid transparent;white-space:nowrap;cursor:pointer;
@@ -599,10 +592,6 @@
       <button class="btn btn-secondary btn-sm" id="btn-copy-dealer-link">🔗 Salin Link</button>
       <button class="btn btn-primary btn-sm" id="btn-add-dealer">+ Dealer</button>
     </div>
-    <div class="report-filter-bar">
-      <span class="lbl">📊 Laporan &amp; Monitoring</span>
-      <button class="btn btn-secondary btn-sm" id="btn-report-filter"><span id="report-filter-label">Semua Dealer</span> ▾</button>
-    </div>
     <div class="admin-tabs">
       <div class="admin-tab active" data-tab="overview">Overview</div>
       <div class="admin-tab" data-tab="rewards">Hadiah</div>
@@ -612,7 +601,6 @@
 
     <!-- OVERVIEW -->
     <div class="admin-panel active" id="panel-overview">
-      <p class="game-note" style="max-width:none;text-align:left;margin:0 0 14px;">Data di bawah mengikuti pilihan dealer pada tombol "📊 Laporan &amp; Monitoring" di atas.</p>
       <div class="stat-grid">
         <div class="stat-card"><div class="n" id="st-participants">0</div><div class="l">Total Peserta</div></div>
         <div class="stat-card"><div class="n" id="st-plays">0</div><div class="l">Total Play</div></div>
@@ -621,19 +609,7 @@
         <div class="stat-card"><div class="n" id="st-claimed">0</div><div class="l">Hadiah Claimed</div></div>
         <div class="stat-card"><div class="n" id="st-unclaimed">0</div><div class="l">Hadiah Unclaimed</div></div>
       </div>
-
-      <div class="section-title" id="overview-by-dealer-title" style="display:none;">Sebaran per Dealer</div>
-      <div class="table-scroll" id="overview-by-dealer-wrap" style="display:none;">
-        <table class="records">
-          <thead><tr><th>Dealer</th><th>Play</th><th>Claimed</th><th>Unclaimed</th></tr></thead>
-          <tbody></tbody>
-        </table>
-      </div>
-
-      <div class="section-title">Sebaran Hadiah (Distribusi Kemenangan)</div>
-      <div id="overview-reward-distribution"></div>
-
-      <div class="section-title">Sisa Stok Hadiah</div>
+      <div class="section-title">Sisa Stok Hadiah — Dealer Ini</div>
       <div id="overview-stock-list"></div>
     </div>
 
@@ -668,7 +644,7 @@
       </div>
       <div class="section-title">Verifikasi Kode Manual</div>
       <div class="card">
-        <p style="font-size:11.5px;color:var(--ink-soft);margin:0 0 10px;">Pencarian kode mengikuti pilihan dealer pada "📊 Laporan &amp; Monitoring" di atas.</p>
+        <p style="font-size:11.5px;color:var(--ink-soft);margin:0 0 10px;">Pencarian kode hanya di dalam dealer yang sedang dipilih di atas.</p>
         <div class="toolbar">
           <input type="text" id="verify-code-input" placeholder="Masukkan Winner Code (PET-...)">
           <button class="btn btn-secondary btn-sm" id="btn-verify-code">Cek</button>
@@ -753,23 +729,6 @@
   </div>
 </div>
 
-<!-- ===== Modal: Report Dealer Filter ===== -->
-<div class="modal-backdrop" id="modal-report-filter">
-  <div class="modal">
-    <h3>Filter Dealer Laporan</h3>
-    <p>Pilih dealer yang ingin digabung di tab Overview &amp; Peserta/Pemenang, untuk memantau pergerakan program tiap hari.</p>
-    <div style="display:flex;gap:8px;margin-bottom:10px;">
-      <button class="btn btn-secondary btn-sm" id="btn-rf-all">Pilih Semua</button>
-      <button class="btn btn-outline-red btn-sm" id="btn-rf-none">Kosongkan</button>
-    </div>
-    <div id="rf-dealer-list" style="max-height:280px;overflow-y:auto;"></div>
-    <div class="modal-actions">
-      <button class="btn btn-secondary btn-block" id="btn-rf-cancel">Batal</button>
-      <button class="btn btn-primary btn-block" id="btn-rf-apply">Terapkan</button>
-    </div>
-  </div>
-</div>
-
 <!-- ===== Modal: Reward Editor ===== -->
 <div class="modal-backdrop" id="modal-reward">
   <div class="modal">
@@ -814,7 +773,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
 import {
   getFirestore, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc,
-  collection, collectionGroup, runTransaction
+  collection, runTransaction
 } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 import {
   getAuth, signInWithEmailAndPassword, signInAnonymously,
@@ -886,14 +845,6 @@ let dealersList = [];
 let adminDealerId = null;
 let currentAdminDealer = null;
 
-/* --- Laporan / monitoring lintas dealer ---
-   reportDealerIds === null artinya "Semua Dealer" (otomatis ikut
-   dealer baru yang ditambahkan). Kalau berupa Set, itu daftar id
-   dealer yang sedang dipilih untuk digabung di Overview & Records. */
-let reportDealerIds = null;
-let allRecords = [];
-let allRewardsAgg = [];
-
 async function fetchDealer(dealerId){
   const snap = await getDoc(doc(db,'dealers',dealerId));
   return snap.exists() ? {id:snap.id, ...snap.data()} : null;
@@ -910,6 +861,13 @@ async function fetchRewards(dealerId){
   if(snap.empty) return DEFAULT_REWARDS.map(r=>({...r}));
   return snap.docs.map(d=>({id:d.id, ...d.data()}));
 }
+/* Hanya dipanggil dari sisi ADMIN. Peserta biasa tidak pernah membaca
+   koleksi records — hasil main langsung dari return value transaction. */
+async function fetchRecords(dealerId){
+  const snap = await getDocs(collection(db,'dealers',dealerId,'records'));
+  return snap.docs.map(d=>({id:d.id, code:d.id, ...d.data()}));
+}
+
 /* Dipanggil HANYA saat admin menambah dealer baru — menabur hadiah
    default ke dealer itu, karena hanya admin yang punya izin menulis. */
 async function seedDealerRewards(dealerId){
@@ -940,73 +898,6 @@ async function createDealer(name, cabang){
 function dealerPublicLink(dealerId){
   return location.origin + location.pathname + '?dealer=' + encodeURIComponent(dealerId);
 }
-
-/* Dibaca lewat collectionGroup supaya admin bisa lihat rekap gabungan
-   dari SEMUA dealer sekaligus (bukan hanya dealer yang sedang aktif
-   di dropdown "Nama Dealer"), tanpa perlu buka satu-satu. Aman karena
-   security rules mewajibkan isAdmin() di setiap dokumen records/rewards,
-   berlaku juga untuk query collectionGroup. */
-async function fetchAllRecordsAgg(){
-  const snap = await getDocs(collectionGroup(db,'records'));
-  return snap.docs.map(d=>({id:d.id, code:d.id, dealerId:d.ref.parent.parent.id, ...d.data()}));
-}
-async function fetchAllRewardsAgg(){
-  const snap = await getDocs(collectionGroup(db,'rewards'));
-  return snap.docs.map(d=>({id:d.id, dealerId:d.ref.parent.parent.id, ...d.data()}));
-}
-async function refreshReportData(){
-  allRecords = await fetchAllRecordsAgg();
-  allRewardsAgg = await fetchAllRewardsAgg();
-}
-function activeReportDealerIds(){
-  return reportDealerIds===null ? dealersList.map(d=>d.id) : [...reportDealerIds];
-}
-function dealerNameById(id){
-  const d = dealersList.find(x=>x.id===id);
-  return d ? (d.name + (d.cabang? ' · '+d.cabang : '')) : id;
-}
-function filteredRecordsAll(){
-  const ids = new Set(activeReportDealerIds());
-  return allRecords.filter(r=> ids.has(r.dealerId));
-}
-function filteredRewardsAll(){
-  const ids = new Set(activeReportDealerIds());
-  return allRewardsAgg.filter(r=> ids.has(r.dealerId));
-}
-function updateReportFilterLabel(){
-  const el = $('#report-filter-label');
-  if(!el) return;
-  if(reportDealerIds===null){ el.textContent = 'Semua Dealer ('+dealersList.length+')'; }
-  else { el.textContent = reportDealerIds.size+' Dealer Dipilih'; }
-}
-function renderReportFilterList(){
-  const wrap = $('#rf-dealer-list');
-  const activeIds = new Set(activeReportDealerIds());
-  wrap.innerHTML = dealersList.map(d=>`
-    <label style="display:flex;align-items:center;gap:8px;padding:8px 0;font-size:13px;border-bottom:1px solid #F5EBDA;">
-      <input type="checkbox" class="rf-check" value="${escapeHtml(d.id)}" ${activeIds.has(d.id)?'checked':''}>
-      <span>${escapeHtml(d.name)}${d.cabang?' · '+escapeHtml(d.cabang):''}</span>
-    </label>`).join('') || '<p style="font-size:12.5px;color:var(--ink-soft);">Belum ada dealer.</p>';
-}
-$('#btn-report-filter').addEventListener('click', ()=>{
-  renderReportFilterList();
-  $('#modal-report-filter').classList.add('active');
-});
-$('#btn-rf-cancel').addEventListener('click', ()=> $('#modal-report-filter').classList.remove('active'));
-$('#btn-rf-all').addEventListener('click', ()=> $all('.rf-check').forEach(c=> c.checked=true));
-$('#btn-rf-none').addEventListener('click', ()=> $all('.rf-check').forEach(c=> c.checked=false));
-$('#btn-rf-apply').addEventListener('click', ()=>{
-  const checked = $all('.rf-check').filter(c=>c.checked).map(c=>c.value);
-  if(checked.length===0 || checked.length===dealersList.length){
-    reportDealerIds = null;
-  } else {
-    reportDealerIds = new Set(checked);
-  }
-  $('#modal-report-filter').classList.remove('active');
-  updateReportFilterLabel();
-  renderOverview();
-  renderRecordsTable();
-});
 
 /* =========================================================
    UTIL
@@ -1358,9 +1249,7 @@ $('#btn-admin-logout').addEventListener('click', async ()=>{
 async function enterAdmin(){
   dealersList = await fetchDealers();
   adminDealerId = dealersList.length ? dealersList[0].id : null;
-  reportDealerIds = null; // default: gabungkan semua dealer di laporan
   renderDealerSwitcher();
-  updateReportFilterLabel();
   if(adminDealerId){ await loadAdminDealerData(); } else { renderEmptyAdminPanels(); }
   showScreen('screen-admin');
 }
@@ -1368,7 +1257,7 @@ async function enterAdmin(){
 async function loadAdminDealerData(){
   currentAdminDealer = dealersList.find(d=>d.id===adminDealerId) || null;
   rewards = await fetchRewards(adminDealerId);
-  await refreshReportData();
+  records = await fetchRecords(adminDealerId);
   renderOverview();
   renderRewardsList();
   renderRecordsTable();
@@ -1377,7 +1266,6 @@ async function loadAdminDealerData(){
 function renderEmptyAdminPanels(){
   currentAdminDealer = null;
   rewards = []; records = [];
-  allRecords = []; allRewardsAgg = [];
   renderOverview(); renderRewardsList(); renderRecordsTable(); fillSettingsForm();
 }
 
@@ -1421,7 +1309,6 @@ $('#btn-save-dealer').addEventListener('click', async ()=>{
   dealersList = await fetchDealers();
   adminDealerId = id;
   renderDealerSwitcher();
-  updateReportFilterLabel();
   await loadAdminDealerData();
   $('#modal-dealer').classList.remove('active');
   toast('Dealer ditambahkan. Link: '+dealerPublicLink(id));
@@ -1443,15 +1330,11 @@ $all('.admin-tab').forEach(tab=>{
    ADMIN — OVERVIEW (khusus dealer yang sedang dipilih)
    ========================================================= */
 function renderOverview(){
-  const list = filteredRecordsAll();
-  const activeIds = activeReportDealerIds();
-  const multi = activeIds.length !== 1;
-
-  const totalPlays = list.length;
-  const uniqueParticipants = new Set(list.map(r=> r.dealerId+'_'+(r.hp||'').replace(/\D/g,''))).size;
-  const totalWinners = list.length; // setiap play valid = 1 reward
-  const claimed = list.filter(r=>r.status==='CLAIMED').length;
-  const unclaimed = list.filter(r=>r.status==='UNCLAIMED').length;
+  const totalPlays = records.length;
+  const uniqueParticipants = new Set(records.map(r=> (r.hp||'').replace(/\D/g,''))).size;
+  const totalWinners = records.length; // setiap play valid = 1 reward
+  const claimed = records.filter(r=>r.status==='CLAIMED').length;
+  const unclaimed = records.filter(r=>r.status==='UNCLAIMED').length;
 
   $('#st-participants').textContent = uniqueParticipants;
   $('#st-plays').textContent = totalPlays;
@@ -1460,64 +1343,14 @@ function renderOverview(){
   $('#st-claimed').textContent = claimed;
   $('#st-unclaimed').textContent = unclaimed;
 
-  // Sebaran per dealer — hanya ditampilkan kalau lebih dari 1 dealer sedang digabung
-  const byDealerTitle = $('#overview-by-dealer-title');
-  const byDealerWrap = $('#overview-by-dealer-wrap');
-  if(multi){
-    const counts = {};
-    list.forEach(r=>{
-      counts[r.dealerId] = counts[r.dealerId] || {plays:0, claimed:0, unclaimed:0};
-      counts[r.dealerId].plays++;
-      if(r.status==='CLAIMED') counts[r.dealerId].claimed++; else counts[r.dealerId].unclaimed++;
-    });
-    const rows = activeIds.map(id=>{
-      const c = counts[id] || {plays:0, claimed:0, unclaimed:0};
-      return `<tr><td>${escapeHtml(dealerNameById(id))}</td><td>${c.plays}</td><td>${c.claimed}</td><td>${c.unclaimed}</td></tr>`;
-    }).join('');
-    byDealerTitle.style.display='block';
-    byDealerWrap.style.display='block';
-    byDealerWrap.querySelector('tbody').innerHTML = rows || '<tr><td colspan="4" style="color:var(--ink-soft);">Belum ada data.</td></tr>';
-  } else {
-    byDealerTitle.style.display='none';
-    byDealerWrap.style.display='none';
-  }
-
-  // Sebaran hadiah (distribusi kemenangan) untuk dealer yang sedang digabung
-  const distWrap = $('#overview-reward-distribution');
-  const distCounts = {};
-  list.forEach(r=>{ distCounts[r.rewardName] = (distCounts[r.rewardName]||0)+1; });
-  const distEntries = Object.entries(distCounts).sort((a,b)=> b[1]-a[1]);
-  const maxCount = distEntries.length ? distEntries[0][1] : 0;
-  distWrap.innerHTML = distEntries.map(([name,count])=>{
-    const pct = totalPlays ? Math.round(count/totalPlays*100) : 0;
-    const barPct = maxCount ? Math.round(count/maxCount*100) : 0;
-    return `<div style="margin-bottom:10px;">
-      <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:4px;">
-        <span style="font-weight:600;">${escapeHtml(name)}</span>
-        <span style="color:var(--ink-soft);">${count}× (${pct}%)</span>
-      </div>
-      <div class="bar-mini"><div class="fill" style="width:${barPct}%;"></div></div>
-    </div>`;
-  }).join('') || '<p style="font-size:12.5px;color:var(--ink-soft);">Belum ada data kemenangan untuk pilihan dealer ini.</p>';
-
-  // Sisa stok hadiah — digabung per nama hadiah dari seluruh dealer yang dipilih
   const stockWrap = $('#overview-stock-list');
-  const stockGroups = {};
-  filteredRewardsAll().forEach(r=>{
-    const g = stockGroups[r.name] || {name:r.name, icon:r.icon, image:r.image, stock:0, anyActive:false, dealers:0};
-    g.stock += Number(r.stock)||0;
-    g.dealers += 1;
-    if(r.active) g.anyActive = true;
-    stockGroups[r.name] = g;
-  });
-  const stockList = Object.values(stockGroups).sort((a,b)=> b.stock-a.stock);
-  stockWrap.innerHTML = stockList.map(r=>`
+  stockWrap.innerHTML = rewards.map(r=>`
     <div class="card" style="display:flex;align-items:center;justify-content:space-between;">
       <div class="reward-row"><div class="thumb">${safeImageTag(r.image) || escapeHtml(r.icon||'🎁')}</div>
-        <div class="meta"><div class="nm">${escapeHtml(r.name)}</div><div class="sub">${r.anyActive?'Aktif':'Nonaktif'}${multi? ' · '+r.dealers+' dealer':''}</div></div>
+        <div class="meta"><div class="nm">${escapeHtml(r.name)}</div><div class="sub">Weight ${Number(r.weight)} · ${r.active?'Aktif':'Nonaktif'}</div></div>
       </div>
-      <div style="text-align:right;"><div style="font-weight:800;font-size:16px;color:var(--red);">${r.stock}</div><div style="font-size:10px;color:var(--ink-soft);">sisa stok</div></div>
-    </div>`).join('') || '<p style="font-size:12.5px;color:var(--ink-soft);">Belum ada hadiah untuk pilihan dealer ini.</p>';
+      <div style="text-align:right;"><div style="font-weight:800;font-size:16px;color:var(--red);">${Number(r.stock)}</div><div style="font-size:10px;color:var(--ink-soft);">sisa stok</div></div>
+    </div>`).join('') || '<p style="font-size:12.5px;color:var(--ink-soft);">Belum ada hadiah untuk dealer ini.</p>';
 }
 
 /* =========================================================
@@ -1588,7 +1421,6 @@ $('#btn-save-reward').addEventListener('click', async ()=>{
   const rewardId = id || ('r_'+Date.now());
   await setDoc(doc(db,'dealers',adminDealerId,'rewards',rewardId), data, {merge:true});
   rewards = await fetchRewards(adminDealerId);
-  await refreshReportData();
   $('#modal-reward').classList.remove('active');
   renderRewardsList(); renderOverview();
   toast('Hadiah disimpan');
@@ -1598,14 +1430,12 @@ async function toggleReward(id){
   const r = rewards.find(x=>x.id===id);
   if(r){ await updateDoc(doc(db,'dealers',adminDealerId,'rewards',id), {active: !r.active}); }
   rewards = await fetchRewards(adminDealerId);
-  await refreshReportData();
   renderRewardsList(); renderOverview();
 }
 async function deleteReward(id){
   if(!confirm('Hapus hadiah ini?')) return;
   await deleteDoc(doc(db,'dealers',adminDealerId,'rewards',id));
   rewards = await fetchRewards(adminDealerId);
-  await refreshReportData();
   renderRewardsList(); renderOverview();
   toast('Hadiah dihapus');
 }
@@ -1614,17 +1444,13 @@ async function deleteReward(id){
    ADMIN — RECORDS / WINNERS (khusus dealer yang sedang dipilih)
    ========================================================= */
 let claimTargetId = null;
-let claimTargetDealerId = null;
 
 function renderRecordsTable(){
   const q = ($('#rec-search').value||'').toLowerCase();
   const statusF = $('#rec-filter-status').value;
   const dateF = $('#rec-filter-date').value;
-  const activeIds = activeReportDealerIds();
-  const multi = activeIds.length !== 1;
 
-  records = [...filteredRecordsAll()].reverse();
-  let list = records;
+  let list = [...records].reverse();
   if(q){
     list = list.filter(r=>
       r.nama.toLowerCase().includes(q) || (r.hp||'').toLowerCase().includes(q) ||
@@ -1633,86 +1459,72 @@ function renderRecordsTable(){
   if(statusF) list = list.filter(r=>r.status===statusF);
   if(dateF) list = list.filter(r=> r.timestamp.slice(0,10)===dateF);
 
-  $('#tbl-records thead tr').innerHTML = multi
-    ? '<th>Waktu</th><th>Dealer</th><th>Nama</th><th>No. HP</th><th>Hadiah</th><th>Kode</th><th>Status</th><th>Aksi</th>'
-    : '<th>Waktu</th><th>Nama</th><th>No. HP</th><th>Hadiah</th><th>Kode</th><th>Status</th><th>Aksi</th>';
-
   $('#tbl-records tbody').innerHTML = list.map(r=>`
     <tr>
       <td>${fmtDate(r.timestamp)}</td>
-      ${multi? `<td>${escapeHtml(dealerNameById(r.dealerId))}</td>` : ''}
       <td>${escapeHtml(r.nama)}</td>
       <td>${escapeHtml(r.hp||'-')}</td>
       <td>${escapeHtml(r.rewardName)}</td>
       <td><b>${escapeHtml(r.code)}</b></td>
       <td><span class="pill ${r.status==='CLAIMED'?'pill-claimed':'pill-unclaimed'}">${escapeHtml(r.status)}</span></td>
-      <td>${r.status==='UNCLAIMED' ? `<button class="btn btn-secondary btn-sm" data-claim="${escapeHtml(r.id)}" data-dealer="${escapeHtml(r.dealerId)}">Verifikasi</button>` : (r.claimPic? 'oleh '+escapeHtml(r.claimPic):'-')}</td>
-    </tr>`).join('') || `<tr><td colspan="${multi?8:7}" style="color:var(--ink-soft);">Belum ada data peserta.</td></tr>`;
+      <td>${r.status==='UNCLAIMED' ? `<button class="btn btn-secondary btn-sm" data-claim="${escapeHtml(r.id)}">Verifikasi</button>` : (r.claimPic? 'oleh '+escapeHtml(r.claimPic):'-')}</td>
+    </tr>`).join('') || '<tr><td colspan="7" style="color:var(--ink-soft);">Belum ada data peserta.</td></tr>';
 
-  $all('[data-claim]').forEach(b=> b.addEventListener('click', ()=> openClaimModal(b.dataset.claim, b.dataset.dealer)));
+  $all('[data-claim]').forEach(b=> b.addEventListener('click', ()=> openClaimModal(b.dataset.claim)));
 }
 ['rec-search','rec-filter-status','rec-filter-date'].forEach(id=>{
   $('#'+id).addEventListener('input', renderRecordsTable);
   $('#'+id).addEventListener('change', renderRecordsTable);
 });
 
-function openClaimModal(id, dealerId){
+function openClaimModal(id){
   claimTargetId = id;
-  claimTargetDealerId = dealerId;
-  const rec = records.find(r=>r.id===id && r.dealerId===dealerId);
-  $('#claim-modal-desc').textContent = 'Konfirmasi penukaran hadiah "'+rec.rewardName+'" untuk kode '+rec.code+' atas nama '+rec.nama+' ('+dealerNameById(dealerId)+').';
+  const rec = records.find(r=>r.id===id);
+  $('#claim-modal-desc').textContent = 'Konfirmasi penukaran hadiah "'+rec.rewardName+'" untuk kode '+rec.code+' atas nama '+rec.nama+'.';
   $('#claim-pic-name').value='';
   $('#modal-claim').classList.add('active');
 }
-$('#btn-cancel-claim').addEventListener('click', ()=>{ $('#modal-claim').classList.remove('active'); claimTargetId=null; claimTargetDealerId=null; });
+$('#btn-cancel-claim').addEventListener('click', ()=>{ $('#modal-claim').classList.remove('active'); claimTargetId=null; });
 $('#btn-confirm-claim').addEventListener('click', async ()=>{
   const pic = $('#claim-pic-name').value.trim();
   if(!pic){ toast('Nama PIC wajib diisi'); return; }
   const claimTime = new Date().toISOString();
-  await updateDoc(doc(db,'dealers',claimTargetDealerId,'records',claimTargetId), {status:'CLAIMED', claimTime, claimPic:pic});
-  await refreshReportData();
+  await updateDoc(doc(db,'dealers',adminDealerId,'records',claimTargetId), {status:'CLAIMED', claimTime, claimPic:pic});
+  records = await fetchRecords(adminDealerId);
   $('#modal-claim').classList.remove('active');
   renderRecordsTable(); renderOverview();
   toast('Hadiah ditandai CLAIMED');
 });
 
 $('#btn-verify-code').addEventListener('click', async ()=>{
-  const ids = activeReportDealerIds();
-  if(ids.length===0){ $('#verify-result').innerHTML = '<span style="color:var(--danger);">Pilih dealer dulu lewat "📊 Laporan &amp; Monitoring".</span>'; return; }
+  if(!adminDealerId){ toast('Pilih dealer dulu'); return; }
   const code = $('#verify-code-input').value.trim().toUpperCase();
   const out = $('#verify-result');
-  let found = null, foundDealerId = null;
-  for(const id of ids){
-    const snap = await getDoc(doc(db,'dealers',id,'records',code));
-    if(snap.exists()){ found = {id:snap.id, code:snap.id, ...snap.data()}; foundDealerId = id; break; }
-  }
-  if(!found){
-    out.innerHTML = '<span style="color:var(--danger);font-weight:700;">INVALID</span> — Kode tidak ditemukan di dealer yang sedang dipilih.';
+  const snap = await getDoc(doc(db,'dealers',adminDealerId,'records',code));
+  if(!snap.exists()){
+    out.innerHTML = '<span style="color:var(--danger);font-weight:700;">INVALID</span> — Kode tidak ditemukan di dealer ini.';
     return;
   }
-  out.innerHTML = `<b>${escapeHtml(found.status)}</b> — ${escapeHtml(found.nama)} (${escapeHtml(found.hp||'-')}) di <b>${escapeHtml(dealerNameById(foundDealerId))}</b> memenangkan <b>${escapeHtml(found.rewardName)}</b> pada ${fmtDate(found.timestamp)}.`
-    + (found.status==='UNCLAIMED' ? ` <button class="btn btn-secondary btn-sm" style="margin-top:8px;" id="verify-claim-now">Verifikasi Sekarang</button>` : '');
+  const rec = {id:snap.id, code:snap.id, ...snap.data()};
+  out.innerHTML = `<b>${escapeHtml(rec.status)}</b> — ${escapeHtml(rec.nama)} (${escapeHtml(rec.hp||'-')}) memenangkan <b>${escapeHtml(rec.rewardName)}</b> pada ${fmtDate(rec.timestamp)}.`
+    + (rec.status==='UNCLAIMED' ? ` <button class="btn btn-secondary btn-sm" style="margin-top:8px;" id="verify-claim-now">Verifikasi Sekarang</button>` : '');
   const btnNow = document.getElementById('verify-claim-now');
-  if(btnNow) btnNow.addEventListener('click', ()=> openClaimModal(found.id, foundDealerId));
+  if(btnNow) btnNow.addEventListener('click', ()=> openClaimModal(rec.id));
 });
 
 $('#btn-export-csv').addEventListener('click', ()=>{
-  const list = filteredRecordsAll();
-  const headers = ['Dealer','Cabang','Timestamp','Nama','No HP','Kode Promo','Hadiah','Winner Code','Status','Waktu Klaim','PIC Klaim'];
-  const rows = list.map(r=>{
-    const d = dealersList.find(x=>x.id===r.dealerId);
-    return [d?d.name:r.dealerId, d?(d.cabang||''):'', r.timestamp, r.nama, r.hp||'', r.promo||'', r.rewardName, r.code, r.status, r.claimTime||'', r.claimPic||''];
-  });
+  const headers = ['Timestamp','Nama','No HP','Kode Promo','Hadiah','Winner Code','Status','Waktu Klaim','PIC Klaim'];
+  const rows = records.map(r=>[
+    r.timestamp, r.nama, r.hp||'', r.promo||'', r.rewardName, r.code, r.status, r.claimTime||'', r.claimPic||''
+  ]);
   const csv = [headers, ...rows].map(row=>
     row.map(cell=> '"'+String(cell).replace(/"/g,'""')+'"').join(',')
   ).join('\n');
   const blob = new Blob(['﻿'+csv], {type:'text/csv;charset=utf-8;'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  const idsUsed = activeReportDealerIds();
-  const slugPart = (dealersList.length && idsUsed.length===dealersList.length) ? 'semua-dealer'
-    : (idsUsed.length===1 ? slugify(dealerNameById(idsUsed[0])) : idsUsed.length+'-dealer');
-  a.href = url; a.download = 'pecah-telur-'+slugPart+'-'+new Date().toISOString().slice(0,10)+'.csv';
+  const dealerSlug = currentAdminDealer ? slugify(currentAdminDealer.name) : (adminDealerId||'dealer');
+  a.href = url; a.download = 'pecah-telur-'+dealerSlug+'-'+new Date().toISOString().slice(0,10)+'.csv';
   document.body.appendChild(a); a.click(); a.remove();
   URL.revokeObjectURL(url);
   toast('CSV diunduh');
@@ -1748,8 +1560,6 @@ $('#btn-save-settings').addEventListener('click', async ()=>{
   dealersList = await fetchDealers();
   currentAdminDealer = dealersList.find(d=>d.id===adminDealerId) || null;
   renderDealerSwitcher();
-  updateReportFilterLabel();
-  renderRecordsTable(); renderOverview();
   toast('Pengaturan dealer disimpan');
 });
 
@@ -1780,15 +1590,9 @@ $('#btn-reset-data').addEventListener('click', async ()=>{
 const dealerParam = (new URLSearchParams(location.search).get('dealer')||'').trim();
 
 async function init(){
-  console.log('[DEBUG] projectId aktif:', app.options.projectId, '| authDomain:', app.options.authDomain);
   onAuthStateChanged(auth, async (user)=>{
-    console.log('[DEBUG] auth state berubah:', user ? {uid:user.uid, isAnonymous:user.isAnonymous, email:user.email} : null);
     if(user && !user.isAnonymous){
-      try{
-        await enterAdmin();
-      }catch(e){
-        console.error('[DEBUG] enterAdmin gagal. code:', e.code, '| message:', e.message, e);
-      }
+      await enterAdmin();
     }
   });
 
